@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "imports_owner_file_name_idx" ON "imports" USING btree ("owner_user_id","file_name");
