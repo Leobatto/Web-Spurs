@@ -15,12 +15,15 @@ type RosterPlayer = {
   jerseyNumber: number | null;
 };
 
-const sortOptions = [
-  { label: "Nombre A-Z", value: "name-asc" },
-  { label: "Nombre Z-A", value: "name-desc" },
-  { label: "Nro. asc", value: "jersey-asc" },
-  { label: "Nro. desc", value: "jersey-desc" },
-];
+function nextSort(currentSort: string, column: "name" | "lastName" | "jersey") {
+  return currentSort === `${column}-asc` ? `${column}-desc` : `${column}-asc`;
+}
+
+function sortArrow(currentSort: string, column: "name" | "lastName" | "jersey") {
+  if (currentSort === `${column}-asc`) return " ↑";
+  if (currentSort === `${column}-desc`) return " ↓";
+  return "";
+}
 
 export function RosterManager({
   activeSort,
@@ -49,17 +52,7 @@ export function RosterManager({
           <p className="text-sm font-medium text-zinc-500">
             {selectedIds.length} jugador(es) seleccionados
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {sortOptions.map((option) => (
-              <Link
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${activeSort === option.value ? "bg-zinc-950 text-white" : "bg-zinc-100 text-zinc-700"}`}
-                href={`/roster?sort=${option.value}`}
-                key={option.value}
-              >
-                {option.label}
-              </Link>
-            ))}
-          </div>
+          <p className="mt-1 text-xs text-zinc-400">Hacé click en Nombre, Apellido o Nro. para ordenar.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -86,11 +79,23 @@ export function RosterManager({
         <table className="w-full text-left text-sm">
           <thead className="bg-zinc-50 text-zinc-500">
             <tr>
-               <th className="px-5 py-3">Sel.</th>
-               <th className="px-5 py-3">Nombre</th>
-               <th className="px-5 py-3">Apellido</th>
-               <th className="px-5 py-3">Nro.</th>
-               <th className="px-5 py-3">Acciones</th>
+              <th className="px-5 py-3">Sel.</th>
+              <th className="px-5 py-3">
+                <Link className="inline-flex items-center font-semibold hover:text-zinc-950" href={`/roster?sort=${nextSort(activeSort, "name")}`}>
+                  Nombre{sortArrow(activeSort, "name")}
+                </Link>
+              </th>
+              <th className="px-5 py-3">
+                <Link className="inline-flex items-center font-semibold hover:text-zinc-950" href={`/roster?sort=${nextSort(activeSort, "lastName")}`}>
+                  Apellido{sortArrow(activeSort, "lastName")}
+                </Link>
+              </th>
+              <th className="px-5 py-3">
+                <Link className="inline-flex items-center font-semibold hover:text-zinc-950" href={`/roster?sort=${nextSort(activeSort, "jersey")}`}>
+                  Nro.{sortArrow(activeSort, "jersey")}
+                </Link>
+              </th>
+              <th className="px-5 py-3">Acciones</th>
             </tr>
           </thead>
           <tbody>

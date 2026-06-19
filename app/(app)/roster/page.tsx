@@ -17,6 +17,8 @@ function messageText(message?: string) {
 
 function sortOrder(sort?: string) {
   if (sort === "name-desc") return desc(players.name);
+  if (sort === "lastName-asc") return asc(players.lastName);
+  if (sort === "lastName-desc") return desc(players.lastName);
   if (sort === "jersey-asc") return asc(players.jerseyNumber);
   if (sort === "jersey-desc") return desc(players.jerseyNumber);
   return asc(players.name);
