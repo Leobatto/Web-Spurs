@@ -16,6 +16,7 @@ import { analyzeGamePdf } from "@/lib/import-analysis";
 import { requireAdmin } from "@/lib/auth";
 import { syncGameToGoogleCalendar } from "@/lib/google-calendar";
 import { createId } from "@/lib/ids";
+import { deriveLastName } from "@/lib/player-name";
 import {
   findBestPlayerMatch,
   isConfidentMatch,
@@ -149,12 +150,14 @@ export async function registerImport(formData: FormData) {
           id: playerId,
           ownerUserId: user.id,
           name: playerStats.name,
+          lastName: deriveLastName(playerStats.name),
           jerseyNumber: playerStats.jerseyNumber ?? null,
         });
         roster.push({
           id: playerId,
           ownerUserId: user.id,
           name: playerStats.name,
+          lastName: deriveLastName(playerStats.name),
           jerseyNumber: playerStats.jerseyNumber ?? null,
           createdAt: new Date(),
           updatedAt: new Date(),

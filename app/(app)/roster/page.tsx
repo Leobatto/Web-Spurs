@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { createPlayer } from "@/app/actions/roster";
 import { RosterManager } from "@/components/roster-manager";
 import { db } from "@/db";
@@ -15,10 +15,17 @@ function messageText(message?: string) {
   return null;
 }
 
+function sortOrder(sort?: string) {
+  if (sort === "name-desc") return desc(players.name);
+  if (sort === "jersey-asc") return asc(players.jerseyNumber);
+  if (sort === "jersey-desc") return desc(players.jerseyNumber);
+  return asc(players.name);
+}
+
 export default async function RosterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ message?: string; sort?: string }>;
 }) {
   const user = await requireAdmin();
   const params = await searchParams;
@@ -27,7 +34,7 @@ export default async function RosterPage({
     .select()
     .from(players)
     .where(eq(players.ownerUserId, user.id))
-    .orderBy(asc(players.name));
+    .orderBy(sortOrder(params.sort), asc(players.name));
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
@@ -39,7 +46,7 @@ export default async function RosterPage({
             {message}
           </p>
         ) : null}
-        <RosterManager roster={roster} />
+        <RosterManager activeSort={params.sort ?? "name-asc"} roster={roster} />
       </section>
       <aside className="grid h-fit gap-6">
         <form action={createPlayer} className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -47,6 +54,10 @@ export default async function RosterPage({
           <label className="mt-5 block text-sm font-medium text-zinc-700">
             Nombre
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="name" required />
+          </label>
+          <label className="mt-4 block text-sm font-medium text-zinc-700">
+            Apellido
+            <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="lastName" />
           </label>
           <label className="mt-4 block text-sm font-medium text-zinc-700">
             Número

@@ -87,6 +87,7 @@ export const players = pgTable("players", {
   id: text("id").primaryKey(),
   ownerUserId: text("owner_user_id").notNull(),
   name: text("name").notNull(),
+  lastName: text("last_name"),
   jerseyNumber: integer("jersey_number"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

@@ -13,9 +13,11 @@ import {
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { createId } from "@/lib/ids";
+import { deriveLastName } from "@/lib/player-name";
 
 const playerSchema = z.object({
   name: z.string().trim().min(2),
+  lastName: z.string().trim().optional(),
   jerseyNumber: z.coerce.number().int().min(0).max(99).optional().or(z.literal("")),
 });
 
@@ -27,6 +29,7 @@ export async function createPlayer(formData: FormData) {
     id: createId("player"),
     ownerUserId: user.id,
     name: parsed.name,
+    lastName: parsed.lastName || deriveLastName(parsed.name),
     jerseyNumber:
       parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
         ? null
@@ -48,6 +51,7 @@ export async function updatePlayer(formData: FormData) {
     .update(players)
     .set({
       name: parsed.name,
+      lastName: parsed.lastName || deriveLastName(parsed.name),
       jerseyNumber:
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null
@@ -117,6 +121,7 @@ export async function unifyPlayers(formData: FormData) {
 const bulkUnifyPlayersSchema = z.object({
   selectedPlayerIds: z.string().min(1),
   finalName: z.string().trim().min(2),
+  finalLastName: z.string().trim().optional(),
   jerseyNumber: z.coerce.number().int().min(0).max(99).optional().or(z.literal("")),
 });
 
@@ -139,6 +144,7 @@ export async function bulkUnifyPlayers(formData: FormData) {
     .update(players)
     .set({
       name: parsed.finalName,
+      lastName: parsed.finalLastName || deriveLastName(parsed.finalName),
       jerseyNumber:
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null

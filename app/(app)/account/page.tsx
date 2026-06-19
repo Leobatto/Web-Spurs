@@ -61,6 +61,14 @@ export default async function AccountPage() {
               />
             </label>
             <label className="mt-4 block text-sm font-medium text-zinc-700">
+              Apellido
+              <input
+                className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
+                defaultValue={linkedPlayer.lastName ?? ""}
+                name="lastName"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-zinc-700">
               Número de camiseta
               <input
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"

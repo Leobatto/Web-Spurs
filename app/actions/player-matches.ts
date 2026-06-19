@@ -13,6 +13,7 @@ import {
 import { analyzedPlayerSchema } from "@/lib/import-analysis";
 import { requireAdmin } from "@/lib/auth";
 import { createId } from "@/lib/ids";
+import { deriveLastName } from "@/lib/player-name";
 
 const resolveSchema = z.object({
   matchId: z.string().min(1),
@@ -125,6 +126,7 @@ export async function resolvePlayerMatch(formData: FormData) {
       id: playerId,
       ownerUserId: user.id,
       name: match.rawName,
+      lastName: deriveLastName(match.rawName),
       jerseyNumber: null,
     });
 

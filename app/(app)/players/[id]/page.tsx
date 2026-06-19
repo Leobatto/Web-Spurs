@@ -140,7 +140,9 @@ export default async function PlayerPage({
       <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-5xl font-black tracking-tight">{player.name}</h1>
-          <p className="mt-2 text-zinc-500">#{player.jerseyNumber ?? "-"} · Estadísticas históricas</p>
+          <p className="mt-2 text-zinc-500">
+            {player.lastName ? `${player.lastName} · ` : ""}#{player.jerseyNumber ?? "-"} · Estadísticas históricas
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === "total" ? "bg-zinc-950 text-white" : "bg-white text-zinc-700"}`} href={filterHref(id, { gameId: filters.gameId })}>

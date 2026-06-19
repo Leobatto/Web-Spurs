@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { players, user as userTable } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { deriveLastName } from "@/lib/player-name";
 
 const accountSchema = z.object({
   phone: z.string().trim().min(8),
@@ -30,6 +31,7 @@ export async function updateOwnAccount(formData: FormData) {
 
 const playerProfileSchema = z.object({
   name: z.string().trim().min(2),
+  lastName: z.string().trim().optional(),
   jerseyNumber: z.coerce.number().int().min(0).max(99).optional().or(z.literal("")),
 });
 
@@ -46,6 +48,7 @@ export async function updateOwnPlayerProfile(formData: FormData) {
     .update(players)
     .set({
       name: parsed.name,
+      lastName: parsed.lastName || deriveLastName(parsed.name),
       jerseyNumber:
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null
