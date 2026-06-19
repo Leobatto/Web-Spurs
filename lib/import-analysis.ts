@@ -1,27 +1,57 @@
 import { z } from "zod";
 
+function integerFromAi(defaultValue = 0) {
+  return z.preprocess((value) => {
+    if (value === null || value === undefined || value === "") {
+      return defaultValue;
+    }
+
+    if (typeof value === "string" && value.includes(":")) {
+      const [minutes, seconds] = value.split(":").map(Number);
+
+      if (Number.isFinite(minutes)) {
+        return Math.round(minutes + (Number.isFinite(seconds) ? seconds / 60 : 0));
+      }
+    }
+
+    const parsed = typeof value === "number" ? value : Number(value);
+
+    return Number.isFinite(parsed) ? Math.round(parsed) : defaultValue;
+  }, z.number().int().default(defaultValue));
+}
+
+const nullableIntegerFromAi = z.preprocess((value) => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const parsed = typeof value === "number" ? value : Number(value);
+
+  return Number.isFinite(parsed) ? Math.round(parsed) : null;
+}, z.number().int().nullable().optional());
+
 export const analyzedPlayerSchema = z.object({
   name: z.string().min(1),
-  jerseyNumber: z.number().int().nullable().optional(),
-  minutes: z.number().int().default(0),
-  points: z.number().int().default(0),
-  fgMade: z.number().int().default(0),
-  fgAtt: z.number().int().default(0),
-  twoMade: z.number().int().default(0),
-  twoAtt: z.number().int().default(0),
-  threeMade: z.number().int().default(0),
-  threeAtt: z.number().int().default(0),
-  ftMade: z.number().int().default(0),
-  ftAtt: z.number().int().default(0),
-  offReb: z.number().int().default(0),
-  defReb: z.number().int().default(0),
-  assists: z.number().int().default(0),
-  steals: z.number().int().default(0),
-  blocks: z.number().int().default(0),
-  turnovers: z.number().int().default(0),
-  fouls: z.number().int().default(0),
-  plusMinus: z.number().int().default(0),
-  efficiency: z.number().int().nullable().optional(),
+  jerseyNumber: nullableIntegerFromAi,
+  minutes: integerFromAi(),
+  points: integerFromAi(),
+  fgMade: integerFromAi(),
+  fgAtt: integerFromAi(),
+  twoMade: integerFromAi(),
+  twoAtt: integerFromAi(),
+  threeMade: integerFromAi(),
+  threeAtt: integerFromAi(),
+  ftMade: integerFromAi(),
+  ftAtt: integerFromAi(),
+  offReb: integerFromAi(),
+  defReb: integerFromAi(),
+  assists: integerFromAi(),
+  steals: integerFromAi(),
+  blocks: integerFromAi(),
+  turnovers: integerFromAi(),
+  fouls: integerFromAi(),
+  plusMinus: integerFromAi(),
+  efficiency: nullableIntegerFromAi,
 });
 
 export const gameAnalysisSchema = z.object({

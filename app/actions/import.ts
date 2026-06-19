@@ -39,10 +39,10 @@ export async function registerImport(formData: FormData) {
   const file = formData.get("pdf");
   const fileName = getUploadedFileName(file);
   const parsed = importSchema.parse({ fileName });
-  const importId = createId("import");
+  let importId = createId("import");
 
   const [existingImport] = await db
-    .select({ id: imports.id })
+    .select({ id: imports.id, status: imports.status })
     .from(imports)
     .where(
       and(
@@ -52,16 +52,32 @@ export async function registerImport(formData: FormData) {
     )
     .limit(1);
 
-  if (existingImport) {
+  if (existingImport && existingImport.status !== "failed") {
     redirect(`/import?error=duplicate&file=${encodeURIComponent(parsed.fileName)}`);
   }
 
-  await db.insert(imports).values({
-    id: importId,
-    ownerUserId: user.id,
-    fileName: parsed.fileName,
-    status: "analyzing",
-  });
+  if (existingImport?.status === "failed") {
+    importId = existingImport.id;
+    await db
+      .update(imports)
+      .set({
+        status: "analyzing",
+        rawExtraction: null,
+        analysisSummary: null,
+        unresolvedMatches: 0,
+        error: null,
+        gameId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(imports.id, importId));
+  } else {
+    await db.insert(imports).values({
+      id: importId,
+      ownerUserId: user.id,
+      fileName: parsed.fileName,
+      status: "analyzing",
+    });
+  }
 
   try {
     if (!file || typeof file === "string") {
