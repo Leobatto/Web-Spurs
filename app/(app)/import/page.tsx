@@ -93,6 +93,15 @@ export default async function ImportPage({
             Sube el PDF, analiza el partido con IA, crea jugadores nuevos y deja dudas para revisión.
           </p>
           <input accept="application/pdf" className="mt-5 w-full rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-4" name="pdf" type="file" required />
+          <label className="mt-5 block text-sm font-medium text-zinc-700">
+            Video de YouTube del partido
+            <input
+              className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
+              name="youtubeUrl"
+              placeholder="https://www.youtube.com/watch?v=..."
+              type="url"
+            />
+          </label>
           <button className="mt-5 w-full rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white" type="submit">
             Registrar importación
           </button>

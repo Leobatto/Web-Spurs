@@ -5,6 +5,7 @@ import {
   createFixtureGame,
   deleteFixtureGame,
   syncFixtureWithGoogleCalendar,
+  updateFixtureVideo,
 } from "@/app/actions/fixture";
 import { db } from "@/db";
 import { games } from "@/db/schema";
@@ -76,6 +77,33 @@ function GameCard({
           Resultado pendiente
         </p>
       )}
+      {game.youtubeUrl ? (
+        <a
+          className="mt-4 inline-flex rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+          href={game.youtubeUrl}
+          target="_blank"
+        >
+          Ver video en YouTube
+        </a>
+      ) : null}
+      {isAdmin && past ? (
+        <form action={updateFixtureVideo} className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
+          <input name="gameId" type="hidden" value={game.id} />
+          <label className="text-sm font-medium text-zinc-700">
+            Video de YouTube
+            <input
+              className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
+              defaultValue={game.youtubeUrl ?? ""}
+              name="youtubeUrl"
+              placeholder="https://www.youtube.com/watch?v=..."
+              type="url"
+            />
+          </label>
+          <button className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900" type="submit">
+            Guardar video
+          </button>
+        </form>
+      ) : null}
       {isAdmin ? (
         <form action={deleteFixtureGame} className="mt-4">
           <input name="gameId" type="hidden" value={game.id} />
@@ -273,6 +301,12 @@ export default async function FixturePage({
             <label className="text-sm font-medium text-zinc-700">
               Cancha / ubicación
               <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="location" />
+            </label>
+          </div>
+          <div className="lg:col-span-3">
+            <label className="text-sm font-medium text-zinc-700">
+              Video de YouTube
+              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." type="url" />
             </label>
           </div>
           <label className="flex items-center gap-3 pt-8 text-sm font-medium text-zinc-700">

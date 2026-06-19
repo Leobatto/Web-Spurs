@@ -15,6 +15,17 @@ import {
 } from "@/lib/google-calendar";
 import { createId } from "@/lib/ids";
 
+const youtubeUrlSchema = z.string().trim().refine((value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return url.hostname === "youtu.be" || url.hostname.endsWith("youtube.com");
+  } catch {
+    return false;
+  }
+}, "Ingresá una URL válida de YouTube.");
+
 const fixtureGameSchema = z.object({
   opponent: z.string().trim().min(2),
   category: z.enum(["PM", "M"]),
@@ -22,6 +33,7 @@ const fixtureGameSchema = z.object({
   location: z.string().trim().optional(),
   isHome: z.string().optional(),
   finalScore: z.string().trim().optional(),
+  youtubeUrl: youtubeUrlSchema,
 });
 
 export async function createFixtureGame(formData: FormData) {
@@ -47,6 +59,7 @@ export async function createFixtureGame(formData: FormData) {
     q4Rival: null,
     summaryWhatsapp: null,
     validationNotes: null,
+    youtubeUrl: parsed.youtubeUrl || null,
     createdAt: new Date(),
     updatedAt: new Date(),
   } satisfies typeof games.$inferInsert;
@@ -60,6 +73,27 @@ export async function createFixtureGame(formData: FormData) {
 
   revalidatePath("/fixture");
   revalidatePath("/dashboard");
+}
+
+const updateFixtureVideoSchema = z.object({
+  gameId: z.string().min(1),
+  youtubeUrl: youtubeUrlSchema,
+});
+
+export async function updateFixtureVideo(formData: FormData) {
+  await requireAdmin();
+  const parsed = updateFixtureVideoSchema.parse(Object.fromEntries(formData));
+
+  await db
+    .update(games)
+    .set({
+      youtubeUrl: parsed.youtubeUrl || null,
+      updatedAt: new Date(),
+    })
+    .where(eq(games.id, parsed.gameId));
+
+  revalidatePath("/fixture");
+  revalidatePath(`/games/${parsed.gameId}`);
 }
 
 const deleteFixtureGameSchema = z.object({

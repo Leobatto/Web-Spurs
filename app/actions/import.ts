@@ -24,8 +24,20 @@ import {
   needsAdminReview,
 } from "@/lib/player-matching";
 
+const youtubeUrlSchema = z.string().trim().refine((value) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return url.hostname === "youtu.be" || url.hostname.endsWith("youtube.com");
+  } catch {
+    return false;
+  }
+}, "Ingresá una URL válida de YouTube.");
+
 const importSchema = z.object({
   fileName: z.string().trim().min(1),
+  youtubeUrl: youtubeUrlSchema,
 });
 
 function getUploadedFileName(value: FormDataEntryValue | null) {
@@ -40,7 +52,10 @@ export async function registerImport(formData: FormData) {
   const user = await requireAdmin();
   const file = formData.get("pdf");
   const fileName = getUploadedFileName(file);
-  const parsed = importSchema.parse({ fileName });
+  const parsed = importSchema.parse({
+    fileName,
+    youtubeUrl: formData.get("youtubeUrl") ?? "",
+  });
   let importId = createId("import");
 
   const [existingImport] = await db
@@ -136,6 +151,7 @@ export async function registerImport(formData: FormData) {
       q4Rival: analysis.quarters[3].rival,
       summaryWhatsapp: analysis.whatsappSummary,
       validationNotes: analysis.validation.notes,
+      youtubeUrl: parsed.youtubeUrl || null,
       googleCalendarEventId: null,
       createdAt: new Date(),
       updatedAt: new Date(),

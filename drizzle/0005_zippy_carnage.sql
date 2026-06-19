@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "youtube_url" text;

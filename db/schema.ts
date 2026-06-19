@@ -120,6 +120,7 @@ export const games = pgTable("games", {
   q4Rival: integer("q4_rival"),
   summaryWhatsapp: text("summary_whatsapp"),
   validationNotes: text("validation_notes"),
+  youtubeUrl: text("youtube_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
