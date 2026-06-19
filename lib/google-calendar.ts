@@ -149,6 +149,22 @@ function eventTitle(game: Game) {
   return `J.P. Spurs vs ${game.opponent} (${category})`;
 }
 
+function localDateTime(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const value = (type: string) => parts.find((part) => part.type === type)?.value;
+
+  return `${value("year")}-${value("month")}-${value("day")}T${value("hour")}:${value("minute")}:${value("second")}`;
+}
+
 function eventBody(game: Game) {
   const locationLink = getLocationLink(game.location);
   const description = [
@@ -164,11 +180,11 @@ function eventBody(game: Game) {
     location: game.location ?? undefined,
     description: description.join("\n"),
     start: {
-      dateTime: game.date.toISOString(),
+      dateTime: localDateTime(game.date),
       timeZone: "America/Argentina/Buenos_Aires",
     },
     end: {
-      dateTime: end.toISOString(),
+      dateTime: localDateTime(end),
       timeZone: "America/Argentina/Buenos_Aires",
     },
   };

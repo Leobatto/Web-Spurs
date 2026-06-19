@@ -21,6 +21,30 @@ function icsDate(date: Date) {
   ].join("");
 }
 
+function icsLocalDate(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "00";
+
+  return [
+    value("year"),
+    value("month"),
+    value("day"),
+    "T",
+    value("hour"),
+    value("minute"),
+    value("second"),
+  ].join("");
+}
+
 function escapeText(value: string) {
   return value
     .replace(/\\/g, "\\\\")
@@ -76,8 +100,8 @@ export function fixtureIcs(gamesList: Game[]) {
       "BEGIN:VEVENT",
       `UID:${game.id}@spurs.leobatto.com`,
       `DTSTAMP:${now}`,
-      `DTSTART:${icsDate(start)}`,
-      `DTEND:${icsDate(end)}`,
+      `DTSTART;TZID=America/Argentina/Buenos_Aires:${icsLocalDate(start)}`,
+      `DTEND;TZID=America/Argentina/Buenos_Aires:${icsLocalDate(end)}`,
       `SUMMARY:${escapeText(title)}`,
       `DESCRIPTION:${escapeText(locationLink ? `${description}\nMapa: ${locationLink}` : description)}`,
       game.location ? `LOCATION:${escapeText(game.location)}` : null,

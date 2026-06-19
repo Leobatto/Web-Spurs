@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
     weekday: "short",
     day: "2-digit",
     month: "short",
