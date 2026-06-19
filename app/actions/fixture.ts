@@ -9,6 +9,7 @@ import { games } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import {
   deleteGameFromGoogleCalendar,
+  isGoogleAuthError,
   syncAllGamesToGoogleCalendar,
   syncGameToGoogleCalendar,
 } from "@/lib/google-calendar";
@@ -51,7 +52,11 @@ export async function createFixtureGame(formData: FormData) {
   } satisfies typeof games.$inferInsert;
 
   await db.insert(games).values(game);
-  await syncGameToGoogleCalendar(game as typeof games.$inferSelect);
+  try {
+    await syncGameToGoogleCalendar(game as typeof games.$inferSelect);
+  } catch {
+    // Fixture creation should not fail because the external calendar needs reconnecting.
+  }
 
   revalidatePath("/fixture");
   revalidatePath("/dashboard");
@@ -71,7 +76,11 @@ export async function deleteFixtureGame(formData: FormData) {
     .limit(1);
 
   if (game) {
-    await deleteGameFromGoogleCalendar(game);
+    try {
+      await deleteGameFromGoogleCalendar(game);
+    } catch {
+      // Keep local delete available even if Google Calendar auth expired.
+    }
     await db.delete(games).where(eq(games.id, parsed.gameId));
   }
 
@@ -86,6 +95,10 @@ export async function syncFixtureWithGoogleCalendar() {
     await syncAllGamesToGoogleCalendar();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+
+    if (isGoogleAuthError(error)) {
+      redirect("/fixture?sync=calendar-auth-expired");
+    }
 
     if (message.includes("Calendar API has not been used") || message.includes("disabled")) {
       redirect("/fixture?sync=calendar-api-disabled");

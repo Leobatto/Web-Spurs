@@ -117,6 +117,13 @@ function syncMessage(code?: string) {
     };
   }
 
+  if (code === "calendar-auth-expired") {
+    return {
+      className: "border-amber-200 bg-amber-50 text-amber-900",
+      text: "La autorización de Google Calendar venció. Reconectá Google Calendar y volvé a sincronizar.",
+    };
+  }
+
   if (code === "calendar-error") {
     return {
       className: "border-red-200 bg-red-50 text-red-800",
@@ -195,6 +202,14 @@ export default async function FixturePage({
               >
                 Habilitar Google Calendar API
               </a>
+            </>
+          ) : null}
+          {params.sync === "calendar-auth-expired" ? (
+            <>
+              {" "}
+              <Link className="font-semibold underline" href="/api/google-calendar/connect">
+                Reconectar Google Calendar
+              </Link>
             </>
           ) : null}
         </p>

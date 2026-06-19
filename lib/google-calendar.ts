@@ -73,11 +73,7 @@ async function getLinkedGoogleCalendarToken() {
     .where(eq(account.userId, admin.id))
     .limit(10);
 
-  if (
-    linkedAccount?.providerId === "google" &&
-    linkedAccount.accessToken &&
-    linkedAccount.scope?.includes("https://www.googleapis.com/auth/calendar.events")
-  ) {
+  if (hasValidCalendarAccess(linkedAccount)) {
     return linkedAccount.accessToken;
   }
 
@@ -87,13 +83,24 @@ async function getLinkedGoogleCalendarToken() {
     .where(eq(account.userId, admin.id));
 
   return (
-    linkedAccounts.find(
-      (row) =>
-        row.providerId === "google" &&
-        row.accessToken &&
-        row.scope?.includes("https://www.googleapis.com/auth/calendar.events"),
-    )?.accessToken ?? null
+    linkedAccounts.find((row) => hasValidCalendarAccess(row))?.accessToken ?? null
   );
+}
+
+function hasValidCalendarAccess(row: typeof account.$inferSelect | undefined) {
+  if (
+    row?.providerId !== "google" ||
+    !row.accessToken ||
+    !row.scope?.includes("https://www.googleapis.com/auth/calendar.events")
+  ) {
+    return false;
+  }
+
+  if (!row.accessTokenExpiresAt) {
+    return true;
+  }
+
+  return row.accessTokenExpiresAt.getTime() > Date.now() + 5 * 60 * 1000;
 }
 
 async function getCalendarClient() {
@@ -223,6 +230,17 @@ export async function syncGameToGoogleCalendar(game: Game) {
   }
 
   return { skipped: false, eventId };
+}
+
+export function isGoogleAuthError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    message.includes("invalid authentication credentials") ||
+    message.includes("Invalid Credentials") ||
+    message.includes("401") ||
+    message.includes("Login Required")
+  );
 }
 
 export async function deleteGameFromGoogleCalendar(game: Game) {
