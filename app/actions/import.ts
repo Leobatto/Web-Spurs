@@ -158,7 +158,6 @@ export async function registerImport(formData: FormData) {
     } satisfies typeof games.$inferInsert;
 
     await db.insert(games).values(game);
-    await syncGameToGoogleCalendar(game as typeof games.$inferSelect);
 
     for (const playerStats of analysis.players) {
       const learnedMatch = findLearnedPlayerMatch(
@@ -244,6 +243,12 @@ export async function registerImport(formData: FormData) {
         updatedAt: new Date(),
       })
       .where(eq(imports.id, importId));
+
+    try {
+      await syncGameToGoogleCalendar(game as typeof games.$inferSelect);
+    } catch {
+      // Calendar sync must never block PDF stats from being saved.
+    }
   } catch (error) {
     await db
       .update(imports)
