@@ -36,6 +36,25 @@ export function RosterManager({
   const [unifyModalOpen, setUnifyModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const firstSelected = roster.find((player) => player.id === selectedIds[0]);
+  const unificationSuggestions = Array.from(
+    roster
+      .filter((player) => player.jerseyNumber !== null)
+      .reduce((groups, player) => {
+        const jerseyNumber = player.jerseyNumber as number;
+        const current = groups.get(jerseyNumber) ?? [];
+
+        groups.set(jerseyNumber, [...current, player]);
+
+        return groups;
+      }, new Map<number, RosterPlayer[]>())
+      .entries(),
+  )
+    .map(([jerseyNumber, playersWithSameNumber]) => ({
+      jerseyNumber,
+      players: playersWithSameNumber,
+    }))
+    .filter((suggestion) => suggestion.players.length > 1)
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
 
   function togglePlayer(playerId: string) {
     setSelectedIds((current) =>
@@ -43,6 +62,15 @@ export function RosterManager({
         ? current.filter((id) => id !== playerId)
         : [...current, playerId],
     );
+  }
+
+  function selectSuggestion(playersWithSameNumber: RosterPlayer[]) {
+    setSelectedIds(playersWithSameNumber.map((player) => player.id));
+  }
+
+  function openSuggestion(playersWithSameNumber: RosterPlayer[]) {
+    selectSuggestion(playersWithSameNumber);
+    setUnifyModalOpen(true);
   }
 
   return (
@@ -73,6 +101,39 @@ export function RosterManager({
           </button>
         </div>
       </div>
+      {unificationSuggestions.length > 0 ? (
+        <div className="border-b border-zinc-100 bg-amber-50/60 p-4">
+          <p className="text-sm font-bold text-amber-950">Sugerencias por número de camiseta</p>
+          <div className="mt-3 grid gap-3">
+            {unificationSuggestions.map((suggestion) => (
+              <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between" key={suggestion.jerseyNumber}>
+                <div>
+                  <p className="text-sm font-semibold text-zinc-900">#{suggestion.jerseyNumber}</p>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {suggestion.players.map((player) => player.name).join(" · ")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className="rounded-xl border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-900"
+                    onClick={() => selectSuggestion(suggestion.players)}
+                    type="button"
+                  >
+                    Seleccionar
+                  </button>
+                  <button
+                    className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-amber-950"
+                    onClick={() => openSuggestion(suggestion.players)}
+                    type="button"
+                  >
+                    Unificar este número
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {roster.length === 0 ? (
         <p className="p-6 text-zinc-500">Todavía no hay jugadores cargados.</p>
       ) : (
