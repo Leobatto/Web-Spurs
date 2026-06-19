@@ -3,7 +3,7 @@ import type { players } from "@/db/schema";
 
 type Player = InferSelectModel<typeof players>;
 
-function normalizeName(value: string) {
+export function normalizeName(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -64,6 +64,27 @@ export function findBestPlayerMatch(rawName: string, roster: Player[]) {
     .sort((a, b) => b.confidence - a.confidence);
 
   return matches[0] ?? null;
+}
+
+export function findLearnedPlayerMatch(
+  rawName: string,
+  learnedMatches: { rawName: string; playerId: string | null }[],
+  roster: Player[],
+) {
+  const normalizedRawName = normalizeName(rawName);
+  for (const learnedMatch of learnedMatches) {
+    if (normalizeName(learnedMatch.rawName) !== normalizedRawName) {
+      continue;
+    }
+
+    const player = roster.find((item) => item.id === learnedMatch.playerId);
+
+    if (player) {
+      return { player, confidence: 100 };
+    }
+  }
+
+  return null;
 }
 
 export function needsAdminReview(confidenceValue: number) {

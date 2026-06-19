@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import {
@@ -19,6 +19,7 @@ import { createId } from "@/lib/ids";
 import { deriveLastName } from "@/lib/player-name";
 import {
   findBestPlayerMatch,
+  findLearnedPlayerMatch,
   isConfidentMatch,
   needsAdminReview,
 } from "@/lib/player-matching";
@@ -96,6 +97,24 @@ export async function registerImport(formData: FormData) {
       .select()
       .from(players)
       .where(eq(players.ownerUserId, user.id));
+    const learnedMatches = await db
+      .select({
+        rawName: playerMatchReviews.rawName,
+        suggestedPlayerId: playerMatchReviews.suggestedPlayerId,
+        createdPlayerId: playerMatchReviews.createdPlayerId,
+      })
+      .from(playerMatchReviews)
+      .where(
+        and(
+          eq(playerMatchReviews.ownerUserId, user.id),
+          inArray(playerMatchReviews.status, ["resolved", "created"]),
+        ),
+      )
+      .orderBy(desc(playerMatchReviews.updatedAt));
+    const learnedPlayerMatches = learnedMatches.map((match) => ({
+      rawName: match.rawName,
+      playerId: match.createdPlayerId ?? match.suggestedPlayerId,
+    }));
     const gameId = createId("game");
     let unresolvedMatches = 0;
 
@@ -126,7 +145,12 @@ export async function registerImport(formData: FormData) {
     await syncGameToGoogleCalendar(game as typeof games.$inferSelect);
 
     for (const playerStats of analysis.players) {
-      const bestMatch = findBestPlayerMatch(playerStats.name, roster);
+      const learnedMatch = findLearnedPlayerMatch(
+        playerStats.name,
+        learnedPlayerMatches,
+        roster,
+      );
+      const bestMatch = learnedMatch ?? findBestPlayerMatch(playerStats.name, roster);
       let playerId: string | null = null;
 
       if (bestMatch && isConfidentMatch(bestMatch.confidence)) {
