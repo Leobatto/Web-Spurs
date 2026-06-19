@@ -113,3 +113,61 @@ export async function unifyPlayers(formData: FormData) {
   revalidatePath(`/players/${parsed.targetPlayerId}`);
   redirect("/roster?message=players-unified");
 }
+
+const bulkUnifyPlayersSchema = z.object({
+  selectedPlayerIds: z.string().min(1),
+  finalName: z.string().trim().min(2),
+  jerseyNumber: z.coerce.number().int().min(0).max(99).optional().or(z.literal("")),
+});
+
+export async function bulkUnifyPlayers(formData: FormData) {
+  await requireAdmin();
+  const parsed = bulkUnifyPlayersSchema.parse(Object.fromEntries(formData));
+  const selectedPlayerIds = parsed.selectedPlayerIds
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (selectedPlayerIds.length < 2) {
+    redirect("/roster?message=select-multiple");
+  }
+
+  const targetPlayerId = selectedPlayerIds[0];
+  const sourcePlayerIds = selectedPlayerIds.slice(1);
+
+  await db
+    .update(players)
+    .set({
+      name: parsed.finalName,
+      jerseyNumber:
+        parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
+          ? null
+          : parsed.jerseyNumber,
+      updatedAt: new Date(),
+    })
+    .where(eq(players.id, targetPlayerId));
+
+  for (const sourcePlayerId of sourcePlayerIds) {
+    await db
+      .update(playerGameStats)
+      .set({ playerId: targetPlayerId, updatedAt: new Date() })
+      .where(eq(playerGameStats.playerId, sourcePlayerId));
+    await db
+      .update(userTable)
+      .set({ playerId: targetPlayerId, updatedAt: new Date() })
+      .where(eq(userTable.playerId, sourcePlayerId));
+    await db
+      .update(playerMatchReviews)
+      .set({ suggestedPlayerId: targetPlayerId, updatedAt: new Date() })
+      .where(eq(playerMatchReviews.suggestedPlayerId, sourcePlayerId));
+    await db
+      .update(playerMatchReviews)
+      .set({ createdPlayerId: targetPlayerId, updatedAt: new Date() })
+      .where(eq(playerMatchReviews.createdPlayerId, sourcePlayerId));
+    await db.delete(players).where(eq(players.id, sourcePlayerId));
+  }
+
+  revalidatePath("/roster");
+  revalidatePath(`/players/${targetPlayerId}`);
+  redirect("/roster?message=players-unified");
+}
