@@ -16,6 +16,11 @@ type Row = {
   game: typeof games.$inferSelect;
 };
 
+type RecordStat = {
+  value: number;
+  row: Row;
+};
+
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("es-AR", {
     timeZone: "America/Argentina/Buenos_Aires",
@@ -82,6 +87,23 @@ function totalsFor(rows: Row[]) {
   }, emptyTotals());
 }
 
+function bestRecordFor(rows: Row[], metric: "points" | "assists" | "rebounds") {
+  return rows.reduce<RecordStat | null>((best, row) => {
+    const value =
+      metric === "points"
+        ? row.stat.points
+        : metric === "assists"
+          ? row.stat.assists
+          : row.stat.offReb + row.stat.defReb;
+
+    if (!best || value > best.value) {
+      return { value, row };
+    }
+
+    return best;
+  }, null);
+}
+
 function filterHref(playerId: string, params: Record<string, string | undefined>) {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -135,6 +157,9 @@ export default async function PlayerPage({
   const advanced = advancedStats(totals);
   const rebounds = totals.offReb + totals.defReb;
   const activeCategory = filters.category ?? "total";
+  const recordPoints = bestRecordFor(rows, "points");
+  const recordAssists = bestRecordFor(rows, "assists");
+  const recordRebounds = bestRecordFor(rows, "rebounds");
 
   return (
     <div>
@@ -191,6 +216,30 @@ export default async function PlayerPage({
         <StatCard label="PIR" value={advanced.pir} helper="Valoración total" />
       </div>
 
+      <section className="mt-8 grid gap-4 md:grid-cols-3">
+        {[
+          { label: "Récord puntos", record: recordPoints, color: "from-rose-500 to-orange-500", helper: "PTS" },
+          { label: "Récord rebotes", record: recordRebounds, color: "from-cyan-500 to-blue-600", helper: "REB" },
+          { label: "Récord asistencias", record: recordAssists, color: "from-emerald-500 to-teal-600", helper: "AST" },
+        ].map(({ label, record, color, helper }) => (
+          <article className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm" key={label}>
+            <div className={`bg-gradient-to-r ${color} p-5 text-white`}>
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">{label}</p>
+              <p className="mt-2 text-4xl font-black">{record?.value ?? 0}</p>
+              <p className="mt-1 text-sm text-white/80">{record ? `${formatDate(record.row.game.date)} · vs ${record.row.game.opponent}` : "Sin datos"}</p>
+            </div>
+            {record ? (
+              <div className="flex items-center justify-between p-4 text-sm">
+                <span className="font-medium text-zinc-600">Tocá para filtrar por ese partido</span>
+                <Link className="rounded-full bg-zinc-950 px-4 py-2 font-semibold text-white" href={filterHref(id, { category: filters.category, gameId: record.row.game.id })}>
+                  Ver {helper}
+                </Link>
+              </div>
+            ) : null}
+          </article>
+        ))}
+      </section>
+
       <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_380px]">
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
           <div className="border-b border-zinc-100 p-5">
@@ -221,9 +270,13 @@ export default async function PlayerPage({
                   <tr><td className="px-4 py-6 text-zinc-500" colSpan={13}>No hay estadísticas para este filtro.</td></tr>
                 ) : null}
                 {orderedRows.map((row) => (
-                  <tr className="border-t border-zinc-100" key={row.stat.id}>
+                  <tr className="border-t border-zinc-100 hover:bg-zinc-50" key={row.stat.id}>
                     <td className="px-4 py-3 font-medium">{formatDate(row.game.date)}</td>
-                    <td className="px-4 py-3">{row.game.opponent}</td>
+                    <td className="px-4 py-3">
+                      <Link className="font-semibold text-zinc-950 underline decoration-zinc-300 underline-offset-4" href={filterHref(id, { category: filters.category, gameId: row.game.id })}>
+                        {row.game.opponent}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3">{row.game.category === "PM" ? "+30" : "+40"}</td>
                     <td className="px-4 py-3">{row.stat.minutes}</td>
                     <td className="px-4 py-3 font-bold">{row.stat.points}</td>
