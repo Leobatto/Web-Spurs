@@ -43,6 +43,13 @@
       "when": 1781888650363,
       "tag": "0005_zippy_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782145721888,
+      "tag": "0006_furry_mentor",
+      "breakpoints": true
     }
   ]
 }

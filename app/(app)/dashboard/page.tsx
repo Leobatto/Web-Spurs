@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
 import { StatCard } from "@/components/stat-card";
 import { requireAdmin } from "@/lib/auth";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ type PlayerTotal = {
   playerId: string;
   name: string;
   lastName: string | null;
+  nickname: string | null;
+  photoUrl: string | null;
   jerseyNumber: number | null;
   games: number;
   points: number;
@@ -32,12 +35,6 @@ const metrics: { key: LeaderMetric; title: string; short: string }[] = [
   { key: "rebounds", title: "Rebotes", short: "REB" },
   { key: "assists", title: "Asistencias", short: "AST" },
 ];
-
-function displayName(player: PlayerTotal) {
-  return player.lastName && !player.name.includes(player.lastName)
-    ? `${player.name} ${player.lastName}`
-    : player.name;
-}
 
 function emptyBuckets() {
   return {
@@ -58,6 +55,8 @@ function addStat(
     playerId: input.player.id,
     name: input.player.name,
     lastName: input.player.lastName,
+    nickname: input.player.nickname,
+    photoUrl: input.player.photoUrl,
     jerseyNumber: input.player.jerseyNumber,
     games: 0,
     points: 0,
@@ -74,7 +73,7 @@ function addStat(
 
 function leadersFor(playersTotals: PlayerTotal[], metric: LeaderMetric) {
   return [...playersTotals]
-    .sort((a, b) => b[metric] - a[metric] || displayName(a).localeCompare(displayName(b)))
+    .sort((a, b) => b[metric] - a[metric] || formatPlayerDisplayName(a).localeCompare(formatPlayerDisplayName(b)))
     .slice(0, 5);
 }
 
@@ -152,7 +151,7 @@ export default async function DashboardPage() {
                           <Link className="flex items-center justify-between gap-4 p-4 hover:bg-zinc-50" href={`/players/${player.playerId}`} key={player.playerId}>
                             <div>
                               <p className="text-xs font-bold text-zinc-400">#{index + 1}</p>
-                              <p className="font-semibold text-zinc-950">{displayName(player)}</p>
+                              <p className="font-semibold text-zinc-950">{formatPlayerDisplayName(player)}</p>
                               <p className="text-xs text-zinc-500">Camiseta #{player.jerseyNumber ?? "-"} · {player.games} PJ</p>
                             </div>
                             <div className="text-right">

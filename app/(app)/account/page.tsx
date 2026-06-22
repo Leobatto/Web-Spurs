@@ -4,6 +4,7 @@ import { LinkGoogleAccountButton } from "@/components/link-google-account-button
 import { db } from "@/db";
 import { account, players } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export default async function AccountPage() {
         </form>
         {linkedPlayer ? (
           <form action={updateOwnPlayerProfile} className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
-            <h2 className="font-semibold">Mi ficha de jugador</h2>
+            <h2 className="font-semibold">{formatPlayerDisplayName(linkedPlayer)}</h2>
             <label className="mt-4 block text-sm font-medium text-zinc-700">
               Nombre deportivo
               <input
@@ -66,6 +67,14 @@ export default async function AccountPage() {
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
                 defaultValue={linkedPlayer.lastName ?? ""}
                 name="lastName"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-zinc-700">
+              Apodo
+              <input
+                className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
+                defaultValue={linkedPlayer.nickname ?? ""}
+                name="nickname"
               />
             </label>
             <label className="mt-4 block text-sm font-medium text-zinc-700">

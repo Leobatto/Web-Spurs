@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { and, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
@@ -6,6 +7,7 @@ import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { advancedStats, type BaseStats } from "@/lib/stats";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 export const dynamic = "force-dynamic";
 
@@ -139,10 +141,13 @@ export default async function PlayerPage({
       <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Jugador</p>
       <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-5xl font-black tracking-tight">{player.name}</h1>
-          <p className="mt-2 text-zinc-500">
-            {player.lastName ? `${player.lastName} · ` : ""}#{player.jerseyNumber ?? "-"} · Estadísticas históricas
-          </p>
+          <div className="flex items-center gap-4">
+            {player.photoUrl ? (
+              <Image alt={formatPlayerDisplayName(player)} className="h-16 w-16 rounded-full object-cover ring-2 ring-zinc-200" height={64} src={player.photoUrl} width={64} />
+            ) : null}
+            <h1 className="text-5xl font-black tracking-tight">{formatPlayerDisplayName(player)}</h1>
+          </div>
+          <p className="mt-2 text-zinc-500">#{player.jerseyNumber ?? "-"} · Estadísticas históricas</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === "total" ? "bg-zinc-950 text-white" : "bg-white text-zinc-700"}`} href={filterHref(id, { gameId: filters.gameId })}>

@@ -3,6 +3,7 @@ import { completeOnboarding } from "@/app/actions/onboarding";
 import { db } from "@/db";
 import { players } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function OnboardingPage() {
           <select className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="playerId" required>
             <option value="">Seleccionar</option>
             {roster.map((player) => (
-              <option key={player.id} value={player.id}>{player.name}{player.lastName ? ` ${player.lastName}` : ""}</option>
+              <option key={player.id} value={player.id}>{formatPlayerDisplayName(player)}</option>
             ))}
           </select>
         </label>

@@ -17,6 +17,7 @@ import { requireAdmin } from "@/lib/auth";
 import { syncGameToGoogleCalendar } from "@/lib/google-calendar";
 import { createId } from "@/lib/ids";
 import { deriveLastName } from "@/lib/player-name";
+import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
 import {
   findBestPlayerMatch,
   findLearnedPlayerMatch,
@@ -35,11 +36,6 @@ const youtubeUrlSchema = z.string().trim().refine((value) => {
   }
 }, "Ingresá una URL válida de YouTube.");
 
-const importSchema = z.object({
-  fileName: z.string().trim().min(1),
-  youtubeUrl: youtubeUrlSchema,
-});
-
 function getUploadedFileName(value: FormDataEntryValue | null) {
   if (value && typeof value === "object" && "name" in value) {
     return String(value.name);
@@ -48,29 +44,37 @@ function getUploadedFileName(value: FormDataEntryValue | null) {
   return "";
 }
 
-export async function registerImport(formData: FormData) {
-  const user = await requireAdmin();
-  const file = formData.get("pdf");
-  const fileName = getUploadedFileName(file);
-  const parsed = importSchema.parse({
-    fileName,
-    youtubeUrl: formData.get("youtubeUrl") ?? "",
-  });
-  let importId = createId("import");
+function asUploadFile(value: FormDataEntryValue | null) {
+  return value instanceof File ? value : null;
+}
+
+async function processImportFile(input: {
+  userId: string;
+  tournamentId: string;
+  file: File;
+  youtubeUrl: string;
+}) {
+  const fileName = getUploadedFileName(input.file);
+
+  if (!fileName) {
+    return { status: "failed" as const };
+  }
 
   const [existingImport] = await db
     .select({ id: imports.id, status: imports.status })
     .from(imports)
     .where(
       and(
-        eq(imports.ownerUserId, user.id),
-        eq(imports.fileName, parsed.fileName),
+        eq(imports.ownerUserId, input.userId),
+        eq(imports.fileName, fileName),
       ),
     )
     .limit(1);
 
+  let importId = createId("import");
+
   if (existingImport && existingImport.status !== "failed") {
-    redirect(`/import?error=duplicate&file=${encodeURIComponent(parsed.fileName)}`);
+    return { status: "duplicate" as const };
   }
 
   if (existingImport?.status === "failed") {
@@ -78,6 +82,7 @@ export async function registerImport(formData: FormData) {
     await db
       .update(imports)
       .set({
+        tournamentId: input.tournamentId,
         status: "analyzing",
         rawExtraction: null,
         analysisSummary: null,
@@ -90,28 +95,25 @@ export async function registerImport(formData: FormData) {
   } else {
     await db.insert(imports).values({
       id: importId,
-      ownerUserId: user.id,
-      fileName: parsed.fileName,
+      ownerUserId: input.userId,
+      tournamentId: input.tournamentId,
+      fileName,
       status: "analyzing",
     });
   }
 
   try {
-    if (!file || typeof file === "string") {
-      throw new Error("No se recibio un archivo PDF valido.");
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(await input.file.arrayBuffer());
     const analysis = await analyzeGamePdf({
-      fileName: parsed.fileName,
-      contentType: file.type || "application/pdf",
+      fileName,
+      contentType: input.file.type || "application/pdf",
       base64: buffer.toString("base64"),
     });
 
     const roster = await db
       .select()
       .from(players)
-      .where(eq(players.ownerUserId, user.id));
+      .where(eq(players.ownerUserId, input.userId));
     const learnedMatches = await db
       .select({
         rawName: playerMatchReviews.rawName,
@@ -121,7 +123,7 @@ export async function registerImport(formData: FormData) {
       .from(playerMatchReviews)
       .where(
         and(
-          eq(playerMatchReviews.ownerUserId, user.id),
+          eq(playerMatchReviews.ownerUserId, input.userId),
           inArray(playerMatchReviews.status, ["resolved", "created"]),
         ),
       )
@@ -135,7 +137,8 @@ export async function registerImport(formData: FormData) {
 
     const game = {
       id: gameId,
-      ownerUserId: user.id,
+      ownerUserId: input.userId,
+      tournamentId: input.tournamentId,
       category: analysis.category,
       opponent: analysis.opponent,
       date: analysis.date ? new Date(analysis.date) : new Date(),
@@ -151,7 +154,7 @@ export async function registerImport(formData: FormData) {
       q4Rival: analysis.quarters[3].rival,
       summaryWhatsapp: analysis.whatsappSummary,
       validationNotes: analysis.validation.notes,
-      youtubeUrl: parsed.youtubeUrl || null,
+      youtubeUrl: input.youtubeUrl || null,
       googleCalendarEventId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -175,7 +178,7 @@ export async function registerImport(formData: FormData) {
         await db.insert(playerMatchReviews).values({
           id: createId("match"),
           importId,
-          ownerUserId: user.id,
+          ownerUserId: input.userId,
           rawName: playerStats.name,
           rawStats: playerStats,
           suggestedPlayerId: bestMatch.player.id,
@@ -187,16 +190,19 @@ export async function registerImport(formData: FormData) {
         playerId = createId("player");
         await db.insert(players).values({
           id: playerId,
-          ownerUserId: user.id,
+          ownerUserId: input.userId,
           name: playerStats.name,
           lastName: deriveLastName(playerStats.name),
+          nickname: null,
           jerseyNumber: playerStats.jerseyNumber ?? null,
         });
         roster.push({
           id: playerId,
-          ownerUserId: user.id,
+          ownerUserId: input.userId,
           name: playerStats.name,
           lastName: deriveLastName(playerStats.name),
+          nickname: null,
+          photoUrl: null,
           jerseyNumber: playerStats.jerseyNumber ?? null,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -235,6 +241,7 @@ export async function registerImport(formData: FormData) {
     await db
       .update(imports)
       .set({
+        tournamentId: input.tournamentId,
         status: unresolvedMatches > 0 ? "reviewed" : "saved",
         rawExtraction: analysis,
         analysisSummary: analysis.whatsappSummary,
@@ -249,18 +256,54 @@ export async function registerImport(formData: FormData) {
     } catch {
       // Calendar sync must never block PDF stats from being saved.
     }
+
+    return { status: unresolvedMatches > 0 ? ("reviewed" as const) : ("saved" as const) };
   } catch (error) {
     await db
       .update(imports)
       .set({
+        tournamentId: input.tournamentId,
         status: "failed",
         error: error instanceof Error ? error.message : "Error desconocido al analizar PDF.",
         updatedAt: new Date(),
       })
       .where(eq(imports.id, importId));
+
+    return { status: "failed" as const };
+  }
+}
+
+export async function registerImport(formData: FormData) {
+  const user = await requireAdmin();
+  const defaultTournaments = await getOrCreateDefaultTournaments(user.id);
+  const tournamentId = String(formData.get("tournamentId") ?? defaultTournaments[0]?.id ?? "");
+  const youtubeUrl = youtubeUrlSchema.parse(String(formData.get("youtubeUrl") ?? ""));
+  const files = formData.getAll("pdfs").map(asUploadFile).filter((file): file is File => Boolean(file));
+  const filesToProcess = files.length > 0 ? files : [asUploadFile(formData.get("pdf"))].filter((file): file is File => Boolean(file));
+
+  let processed = 0;
+  let duplicates = 0;
+  let failed = 0;
+
+  for (const file of filesToProcess) {
+    const result = await processImportFile({
+      userId: user.id,
+      tournamentId,
+      file,
+      youtubeUrl,
+    });
+
+    if (result.status === "saved" || result.status === "reviewed") {
+      processed += 1;
+    } else if (result.status === "duplicate") {
+      duplicates += 1;
+    } else {
+      failed += 1;
+    }
   }
 
   revalidatePath("/import");
   revalidatePath("/roster");
   revalidatePath("/dashboard");
+  redirect(`/import?message=imports-processed&processed=${processed}&duplicates=${duplicates}&failed=${failed}`);
 }

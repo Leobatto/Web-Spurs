@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -7,11 +8,14 @@ import {
   deletePlayer,
   updatePlayer,
 } from "@/app/actions/roster";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 type RosterPlayer = {
   id: string;
   name: string;
   lastName: string | null;
+  nickname: string | null;
+  photoUrl: string | null;
   jerseyNumber: number | null;
 };
 
@@ -110,7 +114,7 @@ export function RosterManager({
                 <div>
                   <p className="text-sm font-semibold text-zinc-900">#{suggestion.jerseyNumber}</p>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {suggestion.players.map((player) => player.name).join(" · ")}
+                    {suggestion.players.map((player) => formatPlayerDisplayName(player)).join(" · ")}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -169,7 +173,16 @@ export function RosterManager({
                     type="checkbox"
                   />
                 </td>
-                <td className="px-5 py-4 align-top font-medium">{player.name}</td>
+                <td className="px-5 py-4 align-top font-medium">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 overflow-hidden rounded-full bg-zinc-100 ring-1 ring-zinc-200">
+                      {player.photoUrl ? (
+                        <Image alt={formatPlayerDisplayName(player)} className="h-full w-full object-cover" height={44} src={player.photoUrl} width={44} />
+                      ) : null}
+                    </div>
+                    <span>{formatPlayerDisplayName(player)}</span>
+                  </div>
+                </td>
                 <td className="px-5 py-4 align-top text-zinc-500">{player.lastName ?? "-"}</td>
                 <td className="px-5 py-4 align-top text-zinc-500">{player.jerseyNumber ?? "-"}</td>
                 <td className="px-5 py-4 align-top">
@@ -196,7 +209,7 @@ export function RosterManager({
           <form action={updatePlayer} className="p-6">
             <input name="playerId" type="hidden" value={firstSelected.id} />
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Editar jugador</p>
-            <h2 className="mt-2 text-2xl font-black">{firstSelected.name}</h2>
+            <h2 className="mt-2 text-2xl font-black">{formatPlayerDisplayName(firstSelected)}</h2>
             <label className="mt-5 block text-sm font-medium text-zinc-700">
               Nombre
               <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={firstSelected.name} name="name" required />
@@ -204,6 +217,10 @@ export function RosterManager({
             <label className="mt-4 block text-sm font-medium text-zinc-700">
               Apellido
               <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={firstSelected.lastName ?? ""} name="lastName" />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-zinc-700">
+              Apodo
+              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={firstSelected.nickname ?? ""} name="nickname" />
             </label>
             <label className="mt-4 block text-sm font-medium text-zinc-700">
               Número
@@ -233,7 +250,7 @@ export function RosterManager({
             <div className="mt-4 rounded-2xl bg-zinc-50 p-4 text-sm text-zinc-600">
               {selectedIds.map((id, index) => {
                 const player = roster.find((item) => item.id === id);
-                return player ? <p key={id}>{index === 0 ? "Destino" : "Origen"}: {player.name}</p> : null;
+                return player ? <p key={id}>{index === 0 ? "Destino" : "Origen"}: {formatPlayerDisplayName(player)}</p> : null;
               })}
             </div>
             <label className="mt-5 block text-sm font-medium text-zinc-700">
@@ -251,6 +268,14 @@ export function RosterManager({
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
                 defaultValue={firstSelected?.lastName ?? ""}
                 name="finalLastName"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-zinc-700">
+              Apodo final
+              <input
+                className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3"
+                defaultValue={firstSelected?.nickname ?? ""}
+                name="finalNickname"
               />
             </label>
             <label className="mt-4 block text-sm font-medium text-zinc-700">

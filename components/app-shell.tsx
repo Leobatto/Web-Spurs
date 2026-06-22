@@ -6,6 +6,7 @@ const links = [
   ["Fixture", "/fixture"],
   ["Plantel", "/roster"],
   ["Importar", "/import"],
+  ["Jugadas", "/jugadas"],
   ["Reportes", "/reports"],
   ["Mi cuenta", "/account"],
 ];

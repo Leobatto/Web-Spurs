@@ -88,10 +88,22 @@ export const players = pgTable("players", {
   ownerUserId: text("owner_user_id").notNull(),
   name: text("name").notNull(),
   lastName: text("last_name"),
+  nickname: text("nickname"),
+  photoUrl: text("photo_url"),
   jerseyNumber: integer("jersey_number"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const tournaments = pgTable("tournaments", {
+  id: text("id").primaryKey(),
+  ownerUserId: text("owner_user_id").notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  uniqueOwnerName: uniqueIndex("tournaments_owner_name_idx").on(table.ownerUserId, table.name),
+}));
 
 export const appSettings = pgTable("app_settings", {
   key: text("key").primaryKey(),
@@ -103,6 +115,7 @@ export const appSettings = pgTable("app_settings", {
 export const games = pgTable("games", {
   id: text("id").primaryKey(),
   ownerUserId: text("owner_user_id").notNull(),
+  tournamentId: text("tournament_id"),
   category: gameCategoryEnum("category").notNull(),
   opponent: text("opponent").notNull(),
   date: timestamp("date").notNull(),
@@ -154,6 +167,7 @@ export const playerGameStats = pgTable("player_game_stats", {
 export const imports = pgTable("imports", {
   id: text("id").primaryKey(),
   ownerUserId: text("owner_user_id").notNull(),
+  tournamentId: text("tournament_id"),
   fileName: text("file_name").notNull(),
   status: importStatusEnum("status").notNull().default("uploaded"),
   rawExtraction: jsonb("raw_extraction"),

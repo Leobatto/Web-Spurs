@@ -32,6 +32,7 @@ export async function updateOwnAccount(formData: FormData) {
 const playerProfileSchema = z.object({
   name: z.string().trim().min(2),
   lastName: z.string().trim().optional(),
+  nickname: z.string().trim().optional(),
   jerseyNumber: z.coerce.number().int().min(0).max(99).optional().or(z.literal("")),
 });
 
@@ -49,6 +50,7 @@ export async function updateOwnPlayerProfile(formData: FormData) {
     .set({
       name: parsed.name,
       lastName: parsed.lastName || deriveLastName(parsed.name),
+      nickname: parsed.nickname || null,
       jerseyNumber:
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null

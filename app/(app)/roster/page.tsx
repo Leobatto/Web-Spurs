@@ -62,6 +62,10 @@ export default async function RosterPage({
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="lastName" />
           </label>
           <label className="mt-4 block text-sm font-medium text-zinc-700">
+            Apodo
+            <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="nickname" />
+          </label>
+          <label className="mt-4 block text-sm font-medium text-zinc-700">
             Número
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="jerseyNumber" type="number" min="0" max="99" />
           </label>
