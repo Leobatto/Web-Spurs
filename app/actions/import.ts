@@ -16,7 +16,7 @@ import { analyzeGamePdf } from "@/lib/import-analysis";
 import { requireAdmin } from "@/lib/auth";
 import { syncGameToGoogleCalendar } from "@/lib/google-calendar";
 import { createId } from "@/lib/ids";
-import { deriveLastName } from "@/lib/player-name";
+import { deriveLastName, formatPlayerDisplayName } from "@/lib/player-name";
 import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
 import {
   findBestPlayerMatch,
@@ -182,7 +182,7 @@ async function processImportFile(input: {
           rawName: playerStats.name,
           rawStats: playerStats,
           suggestedPlayerId: bestMatch.player.id,
-          suggestedPlayerName: bestMatch.player.name,
+          suggestedPlayerName: formatPlayerDisplayName(bestMatch.player),
           confidence: bestMatch.confidence,
           status: "pending",
         });

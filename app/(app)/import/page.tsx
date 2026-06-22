@@ -3,9 +3,10 @@ import { createTournament } from "@/app/actions/tournaments";
 import { registerImport } from "@/app/actions/import";
 import { resolvePlayerMatch } from "@/app/actions/player-matches";
 import { db } from "@/db";
-import { imports, playerMatchReviews, tournaments } from "@/db/schema";
+import { imports, playerMatchReviews, players, tournaments } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 export const dynamic = "force-dynamic";
 
@@ -46,8 +47,9 @@ export default async function ImportPage({
     .where(eq(imports.ownerUserId, user.id))
     .orderBy(desc(imports.createdAt));
   const pendingMatches = await db
-    .select()
+    .select({ match: playerMatchReviews, suggestedPlayer: players })
     .from(playerMatchReviews)
+    .leftJoin(players, eq(playerMatchReviews.suggestedPlayerId, players.id))
     .where(
       and(
         eq(playerMatchReviews.ownerUserId, user.id),
@@ -67,11 +69,11 @@ export default async function ImportPage({
             </p>
           </div>
           <div className="grid max-h-[70vh] gap-3 overflow-auto p-6">
-            {pendingMatches.map((match) => (
+            {pendingMatches.map(({ match, suggestedPlayer }) => (
               <div className="rounded-2xl border border-zinc-200 p-4" key={match.id}>
                 <p className="font-semibold">PDF: {match.rawName}</p>
                 <p className="mt-1 text-sm text-zinc-500">
-                  Sugerencia: {match.suggestedPlayerName ?? "sin sugerencia"} ({match.confidence}%)
+                  Sugerencia: {suggestedPlayer ? formatPlayerDisplayName(suggestedPlayer) : match.suggestedPlayerName ?? "sin sugerencia"} ({match.confidence}%)
                 </p>
                 <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   {match.suggestedPlayerId ? (
