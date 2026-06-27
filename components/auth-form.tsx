@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 
+const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL ?? "invitado@spurs.local";
+const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD ?? "Inv1tad0L0c4l!";
+
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +59,30 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       }
     } catch {
       setError("No se pudo iniciar sesión con Google.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function guest() {
+    setPending(true);
+    setError(null);
+
+    try {
+      const result = await authClient.signIn.email({
+        email: guestEmail,
+        password: guestPassword,
+      });
+
+      if (result.error) {
+        setError(result.error.message ?? "No se pudo ingresar como invitado.");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("No se pudo ingresar como invitado.");
     } finally {
       setPending(false);
     }
@@ -121,6 +148,16 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         >
           {pending ? "Redirigiendo..." : "Continuar con Google"}
         </button>
+        {mode === "sign-in" ? (
+          <button
+            className="mt-3 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 font-semibold text-zinc-950 transition hover:-translate-y-0.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2"
+            onClick={guest}
+            disabled={pending}
+            type="button"
+          >
+            {pending ? "Ingresando..." : "Ingresar como Invitado"}
+          </button>
+        ) : null}
         {mode === "sign-in" ? (
           <Link className="mt-4 block text-center text-sm font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2" href="/forgot-password">
             Olvidé mi contraseña

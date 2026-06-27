@@ -3,9 +3,9 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(196,206,214,0.18),_transparent_32%),linear-gradient(180deg,#0a0a0a_0%,#141414_60%,#f3f1ec_60%,#f3f1ec_100%)] text-white">
-      <main className="mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:py-16">
-        <section className="space-y-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(196,206,214,0.12),_transparent_34%),linear-gradient(180deg,#0a0a0a_0%,#141414_54%,#f3f1ec_54%,#f3f1ec_100%)] text-zinc-950">
+      <main className="mx-auto grid min-h-screen max-w-7xl items-start gap-12 px-6 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:py-16">
+        <section className="space-y-8 text-white lg:pr-8">
           <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 backdrop-blur">
             <Image alt="JP Spurs" src="/logo-spurs.png" width={24} height={24} className="rounded-full bg-white p-0.5" />
             Spurs Stats Platform
@@ -15,7 +15,7 @@ export default function Home() {
             <h1 className="mt-5 text-5xl font-black tracking-tight text-white sm:text-7xl">
               El centro de mando de tus partidos, planillas y jugadores.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300 lg:text-zinc-400">
               Cargá PDFs en lote, armá torneos, seguí récords por jugador y ordená todo con una experiencia rápida, oscura y lista para el banco.
             </p>
           </div>
