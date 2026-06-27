@@ -15,7 +15,17 @@ const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET ?? "H84nYj9Qm2bP0xLv7sAe4rT6kZc1uWf3",
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL: {
+    allowedHosts: [
+      "localhost:3000",
+      "127.0.0.1:3000",
+      "jp-spurs-web.vercel.app",
+      "*.vercel.app",
+      "spurs.leobatto.com",
+      "spurs.vercel.com",
+    ],
+    fallback: process.env.BETTER_AUTH_URL ?? "https://jp-spurs-web.vercel.app",
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
