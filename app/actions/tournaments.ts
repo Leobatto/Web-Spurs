@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { tournaments } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireWrite } from "@/lib/auth";
 import { createId } from "@/lib/ids";
 
 const tournamentSchema = z.object({
@@ -14,7 +14,7 @@ const tournamentSchema = z.object({
 });
 
 export async function createTournament(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const parsed = tournamentSchema.parse(Object.fromEntries(formData));
 
   const [existing] = await db

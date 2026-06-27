@@ -50,6 +50,13 @@
       "when": 1782145721888,
       "tag": "0006_furry_mentor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782486000000,
+      "tag": "0007_wide_silent_phase",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { getResend } from "@/lib/email";
 
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "leobatto@gmail.com";
 
@@ -21,6 +22,29 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      const resend = getResend();
+
+      if (!resend) {
+        console.log(`Reset password for ${user.email}: ${url}`);
+        return;
+      }
+
+      await resend.emails.send({
+        from: process.env.RESEND_FROM ?? "Spurs Stats <reportes@spurs.leobatto.com>",
+        to: user.email,
+        subject: "JP Spurs: restablecé tu contraseña",
+        html: `
+          <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111">
+            <h1 style="margin:0 0 12px">JP Spurs</h1>
+            <p>Recibimos una solicitud para restablecer tu contraseña.</p>
+            <p><a href="${url}">Restablecer contraseña</a></p>
+            <p>Si no fuiste vos, ignorá este mensaje.</p>
+          </div>
+        `,
+      });
+    },
   },
   socialProviders:
     googleClientId && googleClientSecret
@@ -71,6 +95,16 @@ export async function requireAdmin() {
   const user = await requireUser();
 
   if (user.role !== "admin") {
+    redirect("/me");
+  }
+
+  return user;
+}
+
+export async function requireWrite() {
+  const user = await requireUser();
+
+  if (user.role === "read") {
     redirect("/me");
   }
 

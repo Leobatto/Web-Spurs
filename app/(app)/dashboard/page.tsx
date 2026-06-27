@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { count, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
 import { StatCard } from "@/components/stat-card";
-import { requireAdmin } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { formatPlayerDisplayName } from "@/lib/player-name";
+import { GameFilters } from "@/components/game-filters";
+import { formatGamePhase } from "@/lib/game-phases";
 
 export const dynamic = "force-dynamic";
 
@@ -77,11 +79,15 @@ function leadersFor(playersTotals: PlayerTotal[], metric: LeaderMetric) {
     .slice(0, 5);
 }
 
-export default async function DashboardPage() {
-  const user = await requireAdmin();
-  const [[playerCount], [gameCount], statRows] = await Promise.all([
-    db.select({ value: count() }).from(players).where(eq(players.ownerUserId, user.id)),
-    db.select({ value: count() }).from(games).where(eq(games.ownerUserId, user.id)),
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ opponent?: string; phase?: string }>;
+}) {
+  const user = await requireUser();
+  const params = await searchParams;
+  const [allGames, statRows] = await Promise.all([
+    db.select().from(games).where(eq(games.ownerUserId, user.id)),
     db
       .select({ player: players, stat: playerGameStats, game: games })
       .from(playerGameStats)
@@ -89,25 +95,45 @@ export default async function DashboardPage() {
       .innerJoin(games, eq(playerGameStats.gameId, games.id))
       .where(eq(games.ownerUserId, user.id)),
   ]);
+  const opponents = Array.from(new Set(allGames.map((game) => game.opponent))).sort((a, b) => a.localeCompare(b));
+  const filteredGames = allGames.filter((game) => {
+    if (params.opponent && game.opponent !== params.opponent) {
+      return false;
+    }
+
+    if (params.phase && game.phase !== params.phase) {
+      return false;
+    }
+
+    return true;
+  });
+  const filteredGameIds = new Set(filteredGames.map((game) => game.id));
+  const filteredStatRows = statRows.filter((row) => filteredGameIds.has(row.game.id));
   const buckets = emptyBuckets();
 
-  for (const row of statRows) {
+  for (const row of filteredStatRows) {
     addStat(buckets.total, row);
     addStat(buckets[row.game.category], row);
   }
   const totalsBySection = Object.fromEntries(
     sections.map((section) => [section.id, Array.from(buckets[section.id].values())]),
   ) as Record<CategoryKey, PlayerTotal[]>;
-  const totalStatsRows = statRows.length;
+  const activePlayers = new Set(filteredStatRows.map((row) => row.player.id)).size;
 
   return (
     <div>
-      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Admin</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Panel</p>
       <h1 className="mt-3 text-4xl font-black tracking-tight">Dashboard</h1>
+      <GameFilters opponents={opponents} selectedOpponent={params.opponent} selectedPhase={params.phase} />
+      {(params.opponent || params.phase) ? (
+        <p className="mt-4 text-sm text-zinc-500">
+          Filtro activo: {params.opponent ? `vs ${params.opponent}` : "todos los rivales"} · {params.phase ? formatGamePhase(params.phase) : "todas las fases"}
+        </p>
+      ) : null}
       <div className="mt-8 grid gap-4 md:grid-cols-3">
-        <StatCard label="Jugadores" value={playerCount.value} helper="Fichas del plantel" />
-        <StatCard label="Partidos" value={gameCount.value} helper="PM y M" />
-        <StatCard label="Stats" value={totalStatsRows} helper="Líneas procesadas desde PDFs" />
+        <StatCard label="Jugadores" value={activePlayers} helper="Con minutos en el filtro" />
+        <StatCard label="Partidos" value={filteredGames.length} helper="Incluye la fase seleccionada" />
+        <StatCard label="Stats" value={filteredStatRows.length} helper="Líneas procesadas desde PDFs" />
       </div>
 
       <nav className="mt-8 flex flex-wrap gap-2 rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm">

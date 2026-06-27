@@ -268,7 +268,7 @@ export default async function FixturePage({
         </section>
       ) : null}
 
-      {user.role === "admin" ? (
+      {user.role !== "read" ? (
         <form action={createFixtureGame} className="mt-8 grid gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm lg:grid-cols-6">
           <div className="lg:col-span-2">
             <label className="text-sm font-medium text-zinc-700">
@@ -322,7 +322,7 @@ export default async function FixturePage({
         <h2 className="text-2xl font-black tracking-tight">Próximos partidos</h2>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {upcomingGames.length === 0 ? <p className="text-zinc-500">No hay próximos partidos cargados.</p> : null}
-          {upcomingGames.map((game) => <GameCard game={game} isAdmin={user.role === "admin"} key={game.id} />)}
+          {upcomingGames.map((game) => <GameCard game={game} isAdmin={user.role !== "read"} key={game.id} />)}
         </div>
       </section>
 
@@ -330,7 +330,7 @@ export default async function FixturePage({
         <h2 className="text-2xl font-black tracking-tight">Partidos pasados</h2>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           {pastGames.length === 0 ? <p className="text-zinc-500">No hay partidos pasados cargados.</p> : null}
-          {pastGames.map((game) => <GameCard game={game} isAdmin={user.role === "admin"} key={game.id} past />)}
+          {pastGames.map((game) => <GameCard game={game} isAdmin={user.role !== "read"} key={game.id} past />)}
         </div>
       </section>
     </div>

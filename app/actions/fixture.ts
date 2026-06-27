@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { games } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireWrite } from "@/lib/auth";
 import {
   deleteGameFromGoogleCalendar,
   isGoogleAuthError,
@@ -37,7 +37,7 @@ const fixtureGameSchema = z.object({
 });
 
 export async function createFixtureGame(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const parsed = fixtureGameSchema.parse(Object.fromEntries(formData));
   const game = {
     id: createId("game"),
@@ -81,7 +81,7 @@ const updateFixtureVideoSchema = z.object({
 });
 
 export async function updateFixtureVideo(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = updateFixtureVideoSchema.parse(Object.fromEntries(formData));
 
   await db
@@ -101,7 +101,7 @@ const deleteFixtureGameSchema = z.object({
 });
 
 export async function deleteFixtureGame(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = deleteFixtureGameSchema.parse(Object.fromEntries(formData));
   const [game] = await db
     .select()

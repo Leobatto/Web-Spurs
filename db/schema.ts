@@ -9,8 +9,9 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const roleEnum = pgEnum("role", ["admin", "player"]);
+export const roleEnum = pgEnum("role", ["admin", "write", "read"]);
 export const gameCategoryEnum = pgEnum("game_category", ["PM", "M"]);
+export const gamePhaseEnum = pgEnum("game_phase", ["regular", "quarterfinal", "semifinal", "final"]);
 export const importStatusEnum = pgEnum("import_status", [
   "uploaded",
   "analyzing",
@@ -38,7 +39,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
-  role: roleEnum("role").notNull().default("player"),
+  role: roleEnum("role").notNull().default("read"),
   phone: text("phone"),
   emailReports: boolean("email_reports").notNull().default(true),
   playerId: text("player_id"),
@@ -117,6 +118,7 @@ export const games = pgTable("games", {
   ownerUserId: text("owner_user_id").notNull(),
   tournamentId: text("tournament_id"),
   category: gameCategoryEnum("category").notNull(),
+  phase: gamePhaseEnum("phase").notNull().default("regular"),
   opponent: text("opponent").notNull(),
   date: timestamp("date").notNull(),
   isHome: boolean("is_home").notNull().default(true),

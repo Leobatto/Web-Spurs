@@ -11,7 +11,7 @@ import {
   players,
   user as userTable,
 } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireWrite } from "@/lib/auth";
 import { createId } from "@/lib/ids";
 import { deriveLastName } from "@/lib/player-name";
 
@@ -23,7 +23,7 @@ const playerSchema = z.object({
 });
 
 export async function createPlayer(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const parsed = playerSchema.parse(Object.fromEntries(formData));
 
   await db.insert(players).values({
@@ -46,7 +46,7 @@ const updatePlayerSchema = playerSchema.extend({
 });
 
 export async function updatePlayer(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = updatePlayerSchema.parse(Object.fromEntries(formData));
 
   await db
@@ -72,7 +72,7 @@ const deletePlayerSchema = z.object({
 });
 
 export async function deletePlayer(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = deletePlayerSchema.parse(Object.fromEntries(formData));
 
   await db.delete(players).where(eq(players.id, parsed.playerId));
@@ -91,7 +91,7 @@ const unifyPlayersSchema = z.object({
 });
 
 export async function unifyPlayers(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = unifyPlayersSchema.parse(Object.fromEntries(formData));
 
   if (parsed.sourcePlayerId === parsed.targetPlayerId) {
@@ -130,7 +130,7 @@ const bulkUnifyPlayersSchema = z.object({
 });
 
 export async function bulkUnifyPlayers(formData: FormData) {
-  await requireAdmin();
+  await requireWrite();
   const parsed = bulkUnifyPlayersSchema.parse(Object.fromEntries(formData));
   const selectedPlayerIds = parsed.selectedPlayerIds
     .split(",")

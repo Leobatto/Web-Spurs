@@ -3,7 +3,7 @@ import { createPlayer } from "@/app/actions/roster";
 import { RosterManager } from "@/components/roster-manager";
 import { db } from "@/db";
 import { players } from "@/db/schema";
-import { requireAdmin } from "@/lib/auth";
+import { requireWrite } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function RosterPage({
 }: {
   searchParams: Promise<{ message?: string; sort?: string }>;
 }) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const params = await searchParams;
   const message = messageText(params.message);
   const roster = await db

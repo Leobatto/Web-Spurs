@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
@@ -29,7 +31,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       return;
     }
 
-    router.push(mode === "sign-in" ? "/dashboard" : "/onboarding");
+    router.push(mode === "sign-in" ? "/dashboard" : "/dashboard");
     router.refresh();
   }
 
@@ -41,21 +43,24 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   }
 
   return (
-    <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm">
-      <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">
-          Spurs Stats
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-zinc-950">
+    <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl shadow-black/10">
+      <div className="bg-zinc-950 p-8 text-white">
+        <div className="flex items-center gap-3">
+          <Image alt="JP Spurs" src="/logo-spurs.png" width={34} height={34} className="rounded-full bg-white p-1" />
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-400">JP Spurs</p>
+        </div>
+        <h1 className="mt-6 text-3xl font-black tracking-tight">
           {mode === "sign-in" ? "Ingresar" : "Crear cuenta"}
         </h1>
+        <p className="mt-3 text-sm leading-6 text-zinc-300">Accedé al panel, cargá partidos y seguí el rendimiento del plantel.</p>
       </div>
-      <form action={submit} className="space-y-4">
+      <div className="p-8">
+        <form action={submit} className="space-y-4">
         {mode === "sign-up" ? (
           <label className="block text-sm font-medium text-zinc-700">
             Nombre
             <input
-              className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950"
+              className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/20"
               name="name"
               required
             />
@@ -64,7 +69,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         <label className="block text-sm font-medium text-zinc-700">
           Email
           <input
-            className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950"
+            className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/20"
             name="email"
             type="email"
             required
@@ -73,7 +78,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         <label className="block text-sm font-medium text-zinc-700">
           Contraseña
           <input
-            className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950"
+            className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/20"
             name="password"
             type="password"
             minLength={8}
@@ -82,20 +87,26 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         </label>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button
-          className="w-full rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white disabled:opacity-60"
+          className="w-full rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 disabled:opacity-60"
           disabled={pending}
           type="submit"
         >
           {pending ? "Procesando..." : mode === "sign-in" ? "Entrar" : "Registrarme"}
         </button>
-      </form>
-      <button
-        className="mt-3 w-full rounded-xl border border-zinc-200 px-4 py-3 font-semibold text-zinc-950"
-        onClick={google}
-        type="button"
-      >
-        Continuar con Google
-      </button>
+        </form>
+        <button
+          className="mt-3 w-full rounded-xl border border-zinc-200 px-4 py-3 font-semibold text-zinc-950 transition hover:-translate-y-0.5 hover:border-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2"
+          onClick={google}
+          type="button"
+        >
+          Continuar con Google
+        </button>
+        {mode === "sign-in" ? (
+          <Link className="mt-4 block text-center text-sm font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2" href="/forgot-password">
+            Olvidé mi contraseña
+          </Link>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
   players,
 } from "@/db/schema";
 import { analyzeGamePdf } from "@/lib/import-analysis";
-import { requireAdmin } from "@/lib/auth";
+import { requireWrite } from "@/lib/auth";
 import { syncGameToGoogleCalendar } from "@/lib/google-calendar";
 import { createId } from "@/lib/ids";
 import { deriveLastName, formatPlayerDisplayName } from "@/lib/player-name";
@@ -36,6 +36,8 @@ const youtubeUrlSchema = z.string().trim().refine((value) => {
   }
 }, "Ingresá una URL válida de YouTube.");
 
+const phaseSchema = z.enum(["regular", "quarterfinal", "semifinal", "final"]);
+
 function getUploadedFileName(value: FormDataEntryValue | null) {
   if (value && typeof value === "object" && "name" in value) {
     return String(value.name);
@@ -51,6 +53,7 @@ function asUploadFile(value: FormDataEntryValue | null) {
 async function processImportFile(input: {
   userId: string;
   tournamentId: string;
+  phase: z.infer<typeof phaseSchema>;
   file: File;
   youtubeUrl: string;
 }) {
@@ -140,6 +143,7 @@ async function processImportFile(input: {
       ownerUserId: input.userId,
       tournamentId: input.tournamentId,
       category: analysis.category,
+      phase: input.phase,
       opponent: analysis.opponent,
       date: analysis.date ? new Date(analysis.date) : new Date(),
       isHome: analysis.isHome,
@@ -274,9 +278,10 @@ async function processImportFile(input: {
 }
 
 export async function registerImport(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const defaultTournaments = await getOrCreateDefaultTournaments(user.id);
   const tournamentId = String(formData.get("tournamentId") ?? defaultTournaments[0]?.id ?? "");
+  const phase = phaseSchema.parse(String(formData.get("phase") ?? "regular"));
   const youtubeUrl = youtubeUrlSchema.parse(String(formData.get("youtubeUrl") ?? ""));
   const files = formData.getAll("pdfs").map(asUploadFile).filter((file): file is File => Boolean(file));
   const filesToProcess = files.length > 0 ? files : [asUploadFile(formData.get("pdf"))].filter((file): file is File => Boolean(file));
@@ -289,6 +294,7 @@ export async function registerImport(formData: FormData) {
     const result = await processImportFile({
       userId: user.id,
       tournamentId,
+      phase,
       file,
       youtubeUrl,
     });
@@ -306,4 +312,50 @@ export async function registerImport(formData: FormData) {
   revalidatePath("/roster");
   revalidatePath("/dashboard");
   redirect(`/import?message=imports-processed&processed=${processed}&duplicates=${duplicates}&failed=${failed}`);
+}
+
+const importTagSchema = z.object({
+  importId: z.string().min(1),
+  tournamentId: z.string().min(1),
+  phase: phaseSchema,
+});
+
+export async function updateImportTags(formData: FormData) {
+  const user = await requireWrite();
+  const parsed = importTagSchema.parse(Object.fromEntries(formData));
+
+  const [importRow] = await db
+    .select()
+    .from(imports)
+    .where(and(eq(imports.id, parsed.importId), eq(imports.ownerUserId, user.id)))
+    .limit(1);
+
+  if (!importRow) {
+    redirect("/import?error=not-found");
+  }
+
+  await db
+    .update(imports)
+    .set({
+      tournamentId: parsed.tournamentId,
+      updatedAt: new Date(),
+    })
+    .where(eq(imports.id, importRow.id));
+
+  if (importRow.gameId) {
+    await db
+      .update(games)
+      .set({
+        tournamentId: parsed.tournamentId,
+        phase: parsed.phase,
+        updatedAt: new Date(),
+      })
+      .where(eq(games.id, importRow.gameId));
+  }
+
+  revalidatePath("/import");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath("/fixture");
+  redirect("/import?message=import-updated");
 }

@@ -11,7 +11,7 @@ import {
   players,
 } from "@/db/schema";
 import { analyzedPlayerSchema } from "@/lib/import-analysis";
-import { requireAdmin } from "@/lib/auth";
+import { requireWrite } from "@/lib/auth";
 import { createId } from "@/lib/ids";
 import { deriveLastName } from "@/lib/player-name";
 
@@ -97,7 +97,7 @@ async function insertResolvedStats(input: {
 }
 
 export async function resolvePlayerMatch(formData: FormData) {
-  const user = await requireAdmin();
+  const user = await requireWrite();
   const parsed = resolveSchema.parse(Object.fromEntries(formData));
 
   const [match] = await db
