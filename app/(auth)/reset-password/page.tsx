@@ -8,7 +8,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
     <div>
       <ResetPasswordForm token={params.token ?? ""} />
       <p className="mt-4 text-center text-sm text-zinc-600">
-        Volver a <Link className="font-semibold" href="/sign-in">Ingresar</Link>
+        Volver a <Link className="font-semibold" href="/sign-in">Entrar al vestuario</Link>
       </p>
     </div>
   );

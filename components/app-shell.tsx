@@ -5,17 +5,25 @@ import { SignOutButton } from "@/components/sign-out-button";
 
 const baseLinks = [
   ["Dashboard", "/dashboard"],
+  ["Torneos", "/torneo"],
+  ["Multimedia", "/multimedia"],
   ["Fixture", "/fixture"],
+  ["Partidos", "/partidos"],
   ["Plantel", "/roster"],
   ["Importar", "/import"],
   ["Jugadas", "/jugadas"],
   ["Reportes", "/reports"],
-  ["Mi cuenta", "/account"],
+  ["Mi perfil", "/account"],
 ];
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const currentUser = await getCurrentUser();
-  const links = currentUser?.role === "admin" ? [...baseLinks, ["Usuarios", "/users"]] : baseLinks;
+  const links =
+    currentUser?.role === "admin"
+      ? [...baseLinks, ["Usuarios", "/users"]]
+      : currentUser?.role === "read"
+        ? [["Dashboard", "/dashboard"]]
+        : baseLinks;
 
   return (
     <div className="min-h-screen bg-[#f3f1ec] text-zinc-950">
@@ -31,7 +39,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </summary>
           <div className="border-t border-white/10 px-5 py-4">
-            <p className="text-sm text-zinc-400">Stats, reportes, usuarios y pizarra.</p>
+            <p className="text-sm text-zinc-400">Stats, reportes, partidos, usuarios y pizarra.</p>
             <nav className="mt-4 grid gap-2">
               {links.map(([label, href]) => (
                 <Link
@@ -56,7 +64,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <Image alt="JP Spurs" src="/logo-spurs.png" width={38} height={38} className="rounded-full bg-white/5 p-1" />
             <span>JP Spurs</span>
           </Link>
-          <p className="mt-2 text-sm text-zinc-400">Stats, reportes, usuarios y pizarra.</p>
+          <p className="mt-2 text-sm text-zinc-400">Stats, reportes, partidos, usuarios y pizarra.</p>
           <nav className="mt-8 grid gap-2">
             {links.map(([label, href]) => (
               <Link

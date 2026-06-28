@@ -7,9 +7,9 @@ import { requireAdmin } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 function messageText(message?: string) {
-  if (message === "invited") return "Usuario invitado y email de reseteo enviado.";
-  if (message === "reset-sent") return "Se envió el enlace de restablecimiento.";
-  if (message === "invite-failed") return "No se pudo completar la invitación.";
+  if (message === "invited") return "Acceso creado y enlace enviado.";
+  if (message === "reset-sent") return "Se envió el enlace para reponer acceso.";
+  if (message === "invite-failed") return "No pudimos completar la invitación.";
   return null;
 }
 
@@ -23,9 +23,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
     <div className="space-y-8">
       <div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Administración</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Usuarios</h1>
+        <h1 className="mt-3 text-4xl font-black tracking-tight">Accesos del vestuario</h1>
         <p className="mt-3 max-w-2xl text-zinc-600">
-          Invitá cuentas nuevas, definí permisos y reseteá contraseñas con un flujo seguro.
+          Sumá gente al staff, definí permisos y reponé accesos desde un solo tablero.
         </p>
       </div>
 
@@ -33,31 +33,31 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
       <section className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <form action={inviteUser} className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-bold">Invitar usuario</h2>
+          <h2 className="text-xl font-bold">Sumar acceso</h2>
           <label className="mt-5 block text-sm font-medium text-zinc-700">
-            Nombre
+            Nombre de cancha
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="name" required />
           </label>
           <label className="mt-4 block text-sm font-medium text-zinc-700">
-            Email
+            Mail
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="email" type="email" required />
           </label>
           <label className="mt-4 block text-sm font-medium text-zinc-700">
-            Permiso
+            Nivel de acceso
             <select className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="role" defaultValue="read" required>
               <option value="admin">Administrador</option>
-              <option value="write">Escritura</option>
+              <option value="write">Edición</option>
               <option value="read">Lectura</option>
             </select>
           </label>
           <button className="mt-5 w-full rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white" type="submit">
-            Invitar y enviar enlace
+            Enviar invitación
           </button>
         </form>
 
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
           <div className="border-b border-zinc-100 p-5">
-            <h2 className="text-xl font-bold">Cuentas registradas</h2>
+            <h2 className="text-xl font-bold">Cuentas activas</h2>
           </div>
           <div className="divide-y divide-zinc-100">
             {users.map((item) => (
@@ -72,17 +72,17 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     <input name="userId" type="hidden" value={item.id} />
                     <select className="rounded-xl border border-zinc-200 px-4 py-2 text-sm" name="role" defaultValue={item.role}>
                       <option value="admin">Administrador</option>
-                      <option value="write">Escritura</option>
+                      <option value="write">Edición</option>
                       <option value="read">Lectura</option>
                     </select>
                     <button className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold" type="submit">
-                      Guardar
+                      Guardar rol
                     </button>
                   </form>
                   <form action={adminRequestPasswordReset}>
                     <input name="email" type="hidden" value={item.email} />
                     <button className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white" type="submit">
-                      Restablecer contraseña
+                      Reponer acceso
                     </button>
                   </form>
                 </div>

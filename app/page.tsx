@@ -8,30 +8,30 @@ export default function Home() {
         <section className="space-y-8 text-white lg:pr-8">
           <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 backdrop-blur">
             <Image alt="JP Spurs" src="/logo-spurs.png" width={24} height={24} className="rounded-full bg-white p-0.5" />
-            Spurs Stats Platform
+            JP Spurs HQ
           </div>
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.45em] text-zinc-400">San Antonio Spurs vibes</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.45em] text-zinc-400">Vestuario digital</p>
             <h1 className="mt-5 text-5xl font-black tracking-tight text-white sm:text-7xl">
-              El centro de mando de tus partidos, planillas y jugadores.
+              La pizarra de JP Spurs
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-300 lg:text-zinc-400">
-              Cargá PDFs en lote, armá torneos, seguí récords por jugador y ordená todo con una experiencia rápida, oscura y lista para el banco.
+              Centralizá estadísticas, torneos y multimedia en un panel pensado para el banco: rápido, claro y con la identidad Spurs bien marcada.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link className="rounded-full bg-white px-6 py-3 font-semibold text-zinc-950 transition hover:-translate-y-0.5 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950" href="/sign-in">
-              Ingresar
+              Entrar al vestuario
             </Link>
             <Link className="rounded-full border border-white/15 bg-white/5 px-6 py-3 font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950" href="/sign-up">
-              Crear cuenta
+              Pedir acceso
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              ["PDF batch", "Cargá múltiples planillas"],
-              ["Torneos", "Separá por temporada"],
-              ["Playbook", "Jugadas en vivo"],
+              ["Carga rápida", "Subí PDFs sin fricción"],
+              ["Torneos", "Ordená +30 y +40"],
+              ["Multimedia", "Archivo visual del club"],
             ].map(([title, text]) => (
               <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur" key={title}>
                 <p className="text-sm font-semibold text-white">{title}</p>
@@ -53,9 +53,9 @@ export default function Home() {
             </div>
             <div className="mt-5 grid gap-4">
               {[
-                ["Partidos procesados", "PDF → stats → tablero"],
-                ["Récords", "Puntos, rebotes y asistencias"],
-                ["Usuarios", "Admin, escritura, lectura"],
+                ["Partidos listos", "PDFs convertidos en stats"],
+                ["Líderes", "Puntos, rebotes y asistencias"],
+                ["Accesos", "Admin, escritura y lectura"],
               ].map(([title, text]) => (
                 <div className="rounded-3xl border border-zinc-100 bg-zinc-50 p-4 transition duration-300 ease-out hover:-translate-y-1 hover:shadow-lg" key={title}>
                   <p className="font-semibold text-zinc-950">{title}</p>

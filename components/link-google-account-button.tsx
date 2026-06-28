@@ -5,7 +5,7 @@ import { authClient } from "@/lib/auth-client";
 
 export function LinkGoogleAccountButton({
   calendarAccess,
-  label = "Vincular mi cuenta Google",
+  label = "Vincular Google",
 }: {
   calendarAccess?: boolean;
   label?: string;
@@ -34,7 +34,7 @@ export function LinkGoogleAccountButton({
     setPending(false);
 
     if (result.error) {
-      setError(result.error.message ?? "No se pudo vincular Google.");
+      setError(result.error.message ?? "No pudimos vincular Google.");
     }
   }
 

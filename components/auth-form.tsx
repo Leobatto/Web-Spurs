@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 
-const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL ?? "invitado@spurs.local";
-const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD ?? "Inv1tad0L0c4l!";
+const guestEmail = process.env.NEXT_PUBLIC_GUEST_EMAIL ?? "juanmanuelraggi@gmail.com";
+const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD ?? "Guest1234!";
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
@@ -96,15 +96,19 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-400">JP Spurs</p>
         </div>
         <h1 className="mt-6 text-3xl font-black tracking-tight">
-          {mode === "sign-in" ? "Ingresar" : "Crear cuenta"}
+          {mode === "sign-in" ? "Entrar al vestuario" : "Pedir acceso"}
         </h1>
-        <p className="mt-3 text-sm leading-6 text-zinc-300">Accedé al panel, cargá partidos y seguí el rendimiento del plantel.</p>
+        <p className="mt-3 text-sm leading-6 text-zinc-300">
+          {mode === "sign-in"
+            ? "Accedé al tablero, revisá el plantel y seguí la producción del equipo."
+            : "Sumá tu cuenta para entrar al tablero y trabajar con el resto del staff."}
+        </p>
       </div>
       <div className="p-8">
         <form action={submit} className="space-y-4">
         {mode === "sign-up" ? (
           <label className="block text-sm font-medium text-zinc-700">
-            Nombre
+            Nombre deportivo
             <input
               className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3 outline-none focus:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/20"
               name="name"
@@ -137,7 +141,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           disabled={pending}
           type="submit"
         >
-          {pending ? "Procesando..." : mode === "sign-in" ? "Entrar" : "Registrarme"}
+          {pending ? "Procesando..." : mode === "sign-in" ? "Entrar al tablero" : "Crear acceso"}
         </button>
         </form>
         <button
@@ -146,7 +150,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           disabled={pending}
           type="button"
         >
-          {pending ? "Redirigiendo..." : "Continuar con Google"}
+          {pending ? "Redirigiendo..." : "Entrar con Google"}
         </button>
         {mode === "sign-in" ? (
           <button
@@ -155,12 +159,12 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             disabled={pending}
             type="button"
           >
-            {pending ? "Ingresando..." : "Ingresar como Invitado"}
+            {pending ? "Ingresando..." : "Entrar como invitado"}
           </button>
         ) : null}
         {mode === "sign-in" ? (
           <Link className="mt-4 block text-center text-sm font-semibold text-zinc-600 underline decoration-zinc-300 underline-offset-4 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2" href="/forgot-password">
-            Olvidé mi contraseña
+            Necesito recuperar acceso
           </Link>
         ) : null}
       </div>

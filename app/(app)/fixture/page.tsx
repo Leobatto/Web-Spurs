@@ -9,12 +9,13 @@ import {
 } from "@/app/actions/fixture";
 import { db } from "@/db";
 import { games } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
 import {
   calendarUrl,
   googleCalendarEmbedUrl,
   googleCalendarSubscribeUrl,
 } from "@/lib/calendar";
+import { formatGameCategory, gameCategoryOptions } from "@/lib/game-categories";
 import { googleCalendarConfigured, googleOAuthConfigured } from "@/lib/google-calendar";
 import { getLocationLink } from "@/lib/locations";
 
@@ -47,7 +48,7 @@ function GameCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
-            {game.category === "PM" ? "+30" : "+40"} · {game.isHome ? "Local" : "Visitante"}
+            {formatGameCategory(game.category)} · {game.isHome ? "Local" : "Visitante"}
           </p>
           <h2 className="mt-2 text-2xl font-black tracking-tight">
             Spurs vs {game.opponent}
@@ -86,7 +87,7 @@ function GameCard({
           Ver video en YouTube
         </a>
       ) : null}
-      {isAdmin && past ? (
+          {isAdmin && past ? (
         <form action={updateFixtureVideo} className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
           <input name="gameId" type="hidden" value={game.id} />
           <label className="text-sm font-medium text-zinc-700">
@@ -100,7 +101,7 @@ function GameCard({
             />
           </label>
           <button className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900" type="submit">
-            Guardar video
+            Guardar clip
           </button>
         </form>
       ) : null}
@@ -120,14 +121,14 @@ function syncMessage(code?: string) {
   if (code === "ok") {
     return {
       className: "border-green-200 bg-green-50 text-green-800",
-      text: "Eventos sincronizados con Google Calendar.",
+      text: "Calendario sincronizado con Google Calendar.",
     };
   }
 
   if (code === "calendar-api-disabled") {
     return {
       className: "border-red-200 bg-red-50 text-red-800",
-      text: "Google Calendar API está deshabilitada en el proyecto 1017462901358. Habilitala en Google Cloud y volvé a sincronizar.",
+      text: "La API de Calendar está deshabilitada en el proyecto 1017462901358. Habilitala en Google Cloud y volvé a sincronizar.",
     };
   }
 
@@ -141,14 +142,14 @@ function syncMessage(code?: string) {
   if (code === "calendar-permission-denied") {
     return {
       className: "border-red-200 bg-red-50 text-red-800",
-      text: "Google rechazó el permiso para crear eventos. Reautorizá Google Calendar desde Mi cuenta.",
+      text: "Google rechazó el permiso para crear eventos. Reautorizá Calendar desde Mi perfil.",
     };
   }
 
   if (code === "calendar-auth-expired") {
     return {
       className: "border-amber-200 bg-amber-50 text-amber-900",
-      text: "La autorización de Google Calendar venció. Reconectá Google Calendar y volvé a sincronizar.",
+      text: "La autorización de Google Calendar venció. Reconectá Calendar y volvé a sincronizar.",
     };
   }
 
@@ -167,7 +168,7 @@ export default async function FixturePage({
 }: {
   searchParams: Promise<{ sync?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireAppUser();
   const params = await searchParams;
   const message = syncMessage(params.sync);
   const now = new Date();
@@ -185,10 +186,10 @@ export default async function FixturePage({
     <div>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Temporada</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight">Fixture</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Calendario</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight">Pizarra de partidos</h1>
           <p className="mt-3 max-w-2xl text-zinc-600">
-            Partidos pasados con resultados y próximos compromisos de J.P. Spurs.
+            Resultados, próximos partidos y todo el calendario de J.P. Spurs en un solo lugar.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -196,22 +197,22 @@ export default async function FixturePage({
             googleSyncConfigured ? (
               <form action={syncFixtureWithGoogleCalendar}>
                 <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-950" type="submit">
-                  Sincronizar eventos
+                  Sincronizar calendario
                 </button>
               </form>
             ) : (
               <Link className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm font-semibold text-zinc-950" href="/api/google-calendar/connect">
-                Conectar Google Calendar
+                Conectar Calendar
               </Link>
             )
           ) : null}
           {googleUrl ? (
             <Link className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white" href={googleUrl} target="_blank">
-              <CalendarPlus size={16} /> Suscribirse en Google Calendar
+              <CalendarPlus size={16} /> Abrir en Google Calendar
             </Link>
           ) : (
             <a className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white" href={icsUrl}>
-              <CalendarPlus size={16} /> Descargar calendario .ics
+              <CalendarPlus size={16} /> Descargar archivo .ics
             </a>
           )}
         </div>
@@ -228,7 +229,7 @@ export default async function FixturePage({
                 href="https://console.developers.google.com/apis/api/calendar-json.googleapis.com/overview?project=1017462901358"
                 target="_blank"
               >
-                Habilitar Google Calendar API
+                Habilitar API de Calendar
               </a>
             </>
           ) : null}
@@ -236,7 +237,7 @@ export default async function FixturePage({
             <>
               {" "}
               <Link className="font-semibold underline" href="/api/google-calendar/connect">
-                Reconectar Google Calendar
+                Reconectar Calendar
               </Link>
             </>
           ) : null}
@@ -245,16 +246,16 @@ export default async function FixturePage({
 
       {!googleUrl ? (
         <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Para mostrar el botón directo de Google Calendar, configurá `NEXT_PUBLIC_SITE_URL` con una URL pública. En local se ofrece descarga del `.ics`.
+          Para mostrar el botón directo de Google Calendar, configurá `NEXT_PUBLIC_SITE_URL` con una URL pública. En local queda disponible la descarga del `.ics`.
         </p>
       ) : null}
 
       {user.role === "admin" && !googleSyncConfigured ? (
         <p className={`mt-4 rounded-2xl border p-4 text-sm ${googleCredentialsConfigured ? "border-amber-200 bg-amber-50 text-amber-900" : "border-red-200 bg-red-50 text-red-800"}`}>
           {googleCredentialsConfigured
-            ? "Google OAuth está configurado. Falta autorizar el calendario una vez: tocá Conectar Google Calendar y aceptá los permisos."
-            : "Para crear eventos dentro del Google Calendar embebido falta configurar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en .env.local."}
-          {googleCredentialsConfigured ? " Si ya vinculaste Google pero falta Calendar, andá a Mi cuenta y tocá Autorizar Google Calendar." : ""}
+            ? "Google OAuth ya está configurado. Falta autorizar Calendar una vez: tocá Conectar Calendar y aceptá los permisos."
+            : "Para crear eventos dentro del calendario embebido falta configurar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en .env.local."}
+          {googleCredentialsConfigured ? " Si ya conectaste Google pero falta Calendar, andá a Mi perfil y tocá Autorizar Calendar." : ""}
         </p>
       ) : null}
 
@@ -280,8 +281,11 @@ export default async function FixturePage({
             <label className="text-sm font-medium text-zinc-700">
               Categoría
               <select className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="category" required>
-                <option value="PM">+30</option>
-                <option value="M">+40</option>
+                {gameCategoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -313,23 +317,23 @@ export default async function FixturePage({
             <input defaultChecked name="isHome" type="checkbox" /> Local
           </label>
           <button className="rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white lg:col-span-2 lg:self-end" type="submit">
-            Agregar partido
+            Sumar partido
           </button>
         </form>
       ) : null}
 
       <section className="mt-10">
-        <h2 className="text-2xl font-black tracking-tight">Próximos partidos</h2>
+        <h2 className="text-2xl font-black tracking-tight">Próximos compromisos</h2>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {upcomingGames.length === 0 ? <p className="text-zinc-500">No hay próximos partidos cargados.</p> : null}
+          {upcomingGames.length === 0 ? <p className="text-zinc-500">No hay compromisos próximos cargados.</p> : null}
           {upcomingGames.map((game) => <GameCard game={game} isAdmin={user.role !== "read"} key={game.id} />)}
         </div>
       </section>
 
       <section className="mt-10">
-        <h2 className="text-2xl font-black tracking-tight">Partidos pasados</h2>
+        <h2 className="text-2xl font-black tracking-tight">Partidos ya jugados</h2>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          {pastGames.length === 0 ? <p className="text-zinc-500">No hay partidos pasados cargados.</p> : null}
+          {pastGames.length === 0 ? <p className="text-zinc-500">No hay partidos cerrados cargados.</p> : null}
           {pastGames.map((game) => <GameCard game={game} isAdmin={user.role !== "read"} key={game.id} past />)}
         </div>
       </section>
