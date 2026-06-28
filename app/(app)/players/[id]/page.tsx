@@ -5,7 +5,8 @@ import { notFound, redirect } from "next/navigation";
 import { StatCard } from "@/components/stat-card";
 import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
+import { formatGameCategory } from "@/lib/game-categories";
 import { advancedStats, type BaseStats } from "@/lib/stats";
 import { formatPlayerDisplayName } from "@/lib/player-name";
 
@@ -121,7 +122,7 @@ export default async function PlayerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ category?: string; gameId?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireAppUser();
   const { id } = await params;
   const filters = await searchParams;
 
@@ -140,7 +141,7 @@ export default async function PlayerPage({
     .from(playerGameStats)
     .innerJoin(games, eq(playerGameStats.gameId, games.id))
     .where(
-      filters.category === "PM" || filters.category === "M"
+      filters.category === "PM" || filters.category === "M" || filters.category === "U"
         ? and(eq(playerGameStats.playerId, id), eq(games.category, filters.category))
         : eq(playerGameStats.playerId, id),
     );
@@ -172,7 +173,7 @@ export default async function PlayerPage({
             ) : null}
             <h1 className="text-5xl font-black tracking-tight">{formatPlayerDisplayName(player)}</h1>
           </div>
-          <p className="mt-2 text-zinc-500">#{player.jerseyNumber ?? "-"} · Estadísticas históricas</p>
+          <p className="mt-2 text-zinc-500">#{player.jerseyNumber ?? "-"} · Resumen histórico</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === "total" ? "bg-zinc-950 text-white" : "bg-white text-zinc-700"}`} href={filterHref(id, { gameId: filters.gameId })}>
@@ -183,6 +184,9 @@ export default async function PlayerPage({
           </Link>
           <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === "M" ? "bg-zinc-950 text-white" : "bg-white text-zinc-700"}`} href={filterHref(id, { category: "M", gameId: filters.gameId })}>
             +40
+          </Link>
+          <Link className={`rounded-full px-4 py-2 text-sm font-semibold ${activeCategory === "U" ? "bg-zinc-950 text-white" : "bg-white text-zinc-700"}`} href={filterHref(id, { category: "U", gameId: filters.gameId })}>
+            Única
           </Link>
         </div>
       </div>
@@ -195,7 +199,7 @@ export default async function PlayerPage({
               <option value="">Todos los partidos</option>
               {allGames.map((game) => (
                 <option key={game.id} value={game.id}>
-                  {formatDate(game.date)} · {game.category === "PM" ? "+30" : "+40"} · vs {game.opponent}
+                  {formatDate(game.date)} · {formatGameCategory(game.category)} · vs {game.opponent}
                 </option>
               ))}
             </select>
@@ -243,8 +247,8 @@ export default async function PlayerPage({
       <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_380px]">
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
           <div className="border-b border-zinc-100 p-5">
-            <h2 className="text-2xl font-black tracking-tight">Game Log</h2>
-            <p className="mt-1 text-sm text-zinc-500">Línea por partido cargado desde PDF.</p>
+            <h2 className="text-2xl font-black tracking-tight">Registro de partidos</h2>
+            <p className="mt-1 text-sm text-zinc-500">Detalle partido a partido importado desde PDFs.</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-left text-sm">
@@ -277,7 +281,7 @@ export default async function PlayerPage({
                         {row.game.opponent}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{row.game.category === "PM" ? "+30" : "+40"}</td>
+                    <td className="px-4 py-3">{formatGameCategory(row.game.category)}</td>
                     <td className="px-4 py-3">{row.stat.minutes}</td>
                     <td className="px-4 py-3 font-bold">{row.stat.points}</td>
                     <td className="px-4 py-3">{row.stat.offReb + row.stat.defReb}</td>
@@ -295,8 +299,8 @@ export default async function PlayerPage({
           </div>
         </div>
         <aside className="rounded-3xl border border-zinc-200 bg-zinc-950 p-6 text-white shadow-sm">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-400">Splits</p>
-          <h2 className="mt-3 text-3xl font-black">Shooting</h2>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-400">Cortes</p>
+          <h2 className="mt-3 text-3xl font-black">Tiro</h2>
           <div className="mt-6 grid gap-4">
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-sm text-zinc-400">FG</p><p className="mt-1 text-2xl font-black">{totals.fgMade}-{totals.fgAtt}</p><p className="text-sm text-zinc-400">{pct(totals.fgMade, totals.fgAtt)}</p></div>
             <div className="rounded-2xl bg-white/10 p-4"><p className="text-sm text-zinc-400">3P</p><p className="mt-1 text-2xl font-black">{totals.threeMade}-{totals.threeAtt}</p><p className="text-sm text-zinc-400">{pct(totals.threeMade, totals.threeAtt)}</p></div>
