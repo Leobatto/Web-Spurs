@@ -125,10 +125,11 @@ function topShooters(
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ opponent?: string; phase?: string }>;
+  searchParams: Promise<{ opponent?: string; phase?: string; category?: string }>;
 }) {
   const user = await requireAppUser();
   const params = await searchParams;
+  const selectedCategory = params.category ?? "total";
   const [allGames, statRows] = await Promise.all([
     db.select().from(games).where(eq(games.ownerUserId, user.id)),
     db.select({ game: games, stat: playerGameStats, player: players }).from(playerGameStats).innerJoin(players, eq(playerGameStats.playerId, players.id)).innerJoin(games, eq(playerGameStats.gameId, games.id)).where(eq(games.ownerUserId, user.id)),
@@ -141,6 +142,10 @@ export default async function ReportsPage({
     }
 
     if (params.phase && game.phase !== params.phase) {
+      return false;
+    }
+
+    if (selectedCategory !== "total" && game.category !== selectedCategory) {
       return false;
     }
 
@@ -219,11 +224,11 @@ export default async function ReportsPage({
         </div>
       </section>
 
-      <GameFilters opponents={opponents} selectedOpponent={params.opponent} selectedPhase={params.phase} />
+  <GameFilters opponents={opponents} selectedCategory={selectedCategory} selectedOpponent={params.opponent} selectedPhase={params.phase} />
 
-      {(params.opponent || params.phase) ? (
+      {(params.opponent || params.phase || selectedCategory !== "total") ? (
         <p className="text-sm text-zinc-500">
-          Filtro activo: {params.opponent ? `vs ${params.opponent}` : "todos los rivales"} · {params.phase ? formatGamePhase(params.phase) : "todas las fases"}
+          Filtro activo: {params.opponent ? `vs ${params.opponent}` : "todos los rivales"} · {params.phase ? formatGamePhase(params.phase) : "todas las fases"} · {selectedCategory === "total" ? "Todo" : formatGameCategory(selectedCategory)}
         </p>
       ) : null}
 

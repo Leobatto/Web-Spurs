@@ -1,7 +1,7 @@
 export const gameCategoryOptions = [
   { value: "PM", label: "+30" },
   { value: "M", label: "+40" },
-  { value: "U", label: "Única" },
+  { value: "U", label: "Torneo de Verano 26" },
 ] as const;
 
 export const gameCategoryValues = ["PM", "M", "U"] as const;
