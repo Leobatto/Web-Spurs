@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { desc, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
@@ -126,17 +126,6 @@ export async function requireAppUser() {
 export async function getDashboardOwnerUserId(userId: string, role: string) {
   if (role === "admin") {
     return userId;
-  }
-
-  const [mostActiveOwner] = await db
-    .select({ id: schema.games.ownerUserId })
-    .from(schema.games)
-    .groupBy(schema.games.ownerUserId)
-    .orderBy(desc(sql<number>`count(*)`))
-    .limit(1);
-
-  if (mostActiveOwner?.id) {
-    return mostActiveOwner.id;
   }
 
   const [owner] = await db
