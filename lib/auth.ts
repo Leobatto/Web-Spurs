@@ -120,13 +120,7 @@ export async function requireUser() {
 }
 
 export async function requireAppUser() {
-  const user = await requireUser();
-
-  if (user.role === "read") {
-    redirect("/dashboard");
-  }
-
-  return user;
+  return requireUser();
 }
 
 export async function getDashboardOwnerUserId(userId: string, role: string) {

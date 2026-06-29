@@ -1,12 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  CalendarDays,
+  ChartColumn,
+  CircleUserRound,
+  Camera,
+  FileUp,
+  Film,
+  Home,
+  LayoutDashboard,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PlaySquare,
+  ShieldUser,
+  Swords,
+  Trophy,
+  Users,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { SignOutButton } from "@/components/sign-out-button";
 
-type ShellLink = [string, string];
+type ShellLink = {
+  label: string;
+  href: string;
+};
+
+const navMeta: Record<string, { icon: React.ComponentType<{ size?: number; className?: string }>; tone: string }> = {
+  Dashboard: { icon: LayoutDashboard, tone: "text-white" },
+  Torneos: { icon: Trophy, tone: "text-zinc-200" },
+  Multimedia: { icon: Film, tone: "text-zinc-300" },
+  Instagram: { icon: Camera, tone: "text-zinc-100" },
+  Fixture: { icon: CalendarDays, tone: "text-zinc-400" },
+  Partidos: { icon: PlaySquare, tone: "text-zinc-200" },
+  Plantel: { icon: Users, tone: "text-zinc-300" },
+  Importar: { icon: FileUp, tone: "text-zinc-100" },
+  Jugadas: { icon: Swords, tone: "text-zinc-400" },
+  Estadísticas: { icon: ChartColumn, tone: "text-zinc-200" },
+  "Mi perfil": { icon: CircleUserRound, tone: "text-zinc-300" },
+  Usuarios: { icon: ShieldUser, tone: "text-zinc-100" },
+};
 
 export function AppShellClient({
   children,
@@ -33,15 +67,22 @@ export function AppShellClient({
           <div className="border-t border-white/10 px-5 py-4">
             <p className="text-sm text-zinc-400">Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
             <nav className="mt-4 grid gap-2">
-              {links.map(([label, href]) => (
+              {links.map(({ label, href }) => {
+                const MetaIcon = navMeta[label]?.icon ?? Home;
+
+                return (
                 <Link
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
                   href={href}
                   key={href}
                 >
+                  <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 ${navMeta[label]?.tone ?? "text-white"}`}>
+                    <MetaIcon size={16} />
+                  </span>
                   {label}
                 </Link>
-              ))}
+                );
+              })}
             </nav>
             <div className="mt-4 pb-1">
               <SignOutButton />
@@ -66,20 +107,25 @@ export function AppShellClient({
               {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
           </div>
-          <p className={`mt-2 text-sm text-zinc-400 transition ${collapsed ? "lg:sr-only" : ""}`}>Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
+            <p className={`mt-2 text-sm text-zinc-400 transition ${collapsed ? "lg:sr-only" : ""}`}>Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
             <nav className="mt-8 grid gap-2">
-              {links.map(([label, href]) => (
+              {links.map(({ label, href }) => {
+                const MetaIcon = navMeta[label]?.icon ?? Home;
+
+                return (
                 <Link
-                className={`rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 ${collapsed ? "lg:flex lg:items-center lg:justify-center" : ""}`}
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 ${collapsed ? "lg:justify-center" : ""}`}
                   href={href}
                   key={href}
                   title={label}
                 >
-                <span className={collapsed ? "lg:inline-flex lg:h-8 lg:w-8 lg:items-center lg:justify-center lg:rounded-lg lg:bg-white/10 lg:text-xs lg:font-black" : ""}>
-                  {collapsed ? label.slice(0, 1) : label}
-                </span>
+                  <span className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 ${navMeta[label]?.tone ?? "text-white"}`}>
+                    <MetaIcon size={16} />
+                  </span>
+                  <span className={collapsed ? "lg:sr-only" : ""}>{label}</span>
                 </Link>
-              ))}
+                );
+              })}
             </nav>
           <div className="mt-auto pt-8">
             <SignOutButton compact={collapsed} />

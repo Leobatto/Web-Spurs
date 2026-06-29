@@ -3,7 +3,7 @@ import { createPlayer } from "@/app/actions/roster";
 import { RosterManager } from "@/components/roster-manager";
 import { db } from "@/db";
 import { players } from "@/db/schema";
-import { requireWrite } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function RosterPage({
 }: {
   searchParams: Promise<{ message?: string; sort?: string }>;
 }) {
-  const user = await requireWrite();
+  const user = await requireAppUser();
   const params = await searchParams;
   const message = messageText(params.message);
   const roster = await db
@@ -37,6 +37,44 @@ export default async function RosterPage({
     .from(players)
     .where(eq(players.ownerUserId, user.id))
     .orderBy(sortOrder(params.sort), asc(players.name));
+
+  if (user.role === "read") {
+    return (
+      <div className="space-y-6">
+        <section className="rounded-[32px] border border-zinc-900 bg-zinc-950 px-6 py-6 text-white shadow-[0_24px_80px_rgba(9,9,11,0.34)] sm:px-8 sm:py-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-400">Plantel</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Jugadores</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">Vista de solo lectura del plantel. Podés abrir cada ficha, pero no crear, editar ni eliminar jugadores.</p>
+        </section>
+        <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-zinc-50 text-zinc-500">
+              <tr>
+                <th className="px-5 py-3">Jugador</th>
+                <th className="px-5 py-3">Apellido</th>
+                <th className="px-5 py-3">Nro.</th>
+                <th className="px-5 py-3">Ficha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roster.map((player) => (
+                <tr className="border-t border-zinc-100" key={player.id}>
+                  <td className="px-5 py-4 font-medium">{player.name}</td>
+                  <td className="px-5 py-4 text-zinc-500">{player.lastName ?? "-"}</td>
+                  <td className="px-5 py-4 text-zinc-500">{player.jerseyNumber ?? "-"}</td>
+                  <td className="px-5 py-4">
+                    <a className="rounded-xl bg-zinc-950 px-3 py-2 text-xs font-semibold text-white" href={`/players/${player.id}`}>
+                      Ver stats
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_420px]">

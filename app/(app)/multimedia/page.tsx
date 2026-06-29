@@ -1,11 +1,11 @@
-import { requireWrite } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 const photosUrl = "https://photos.google.com/share/AF1QipN3qBIhUMEbEk9iz6S2tqkq6Jmh3GnCg87G9ROfWWJ-qeEuOxwzhI54I1VvIL4jVg?key=a3BDc1g4Nnl3UGp5anhwRmh2WS1sMDg1LU56aVNB";
 
 export default async function MultimediaPage() {
-  await requireWrite();
+  await requireAppUser();
 
   return (
     <div className="space-y-8">

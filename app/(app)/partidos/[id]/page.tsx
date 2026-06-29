@@ -129,9 +129,7 @@ export default async function PartidoDetailPage({ params }: { params: Promise<{ 
       .from(games)
       .where(and(eq(games.id, id), eq(games.ownerUserId, user.id)))
       .limit(1),
-    user.role === "admin"
-      ? db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id))
-      : Promise.resolve([]),
+    db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id)),
   ]);
   const [game] = gameRows;
 

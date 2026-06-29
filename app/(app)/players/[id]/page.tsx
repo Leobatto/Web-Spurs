@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { and, eq } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { StatCard } from "@/components/stat-card";
 import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
@@ -122,13 +122,9 @@ export default async function PlayerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ category?: string; gameId?: string }>;
 }) {
-  const user = await requireAppUser();
+  await requireAppUser();
   const { id } = await params;
   const filters = await searchParams;
-
-  if (user.role !== "admin" && user.playerId !== id) {
-    redirect("/me");
-  }
 
   const [player] = await db.select().from(players).where(eq(players.id, id)).limit(1);
 

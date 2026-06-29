@@ -4,7 +4,7 @@ import { updateImportTags } from "@/app/actions/import";
 import { resolvePlayerMatch } from "@/app/actions/player-matches";
 import { db } from "@/db";
 import { imports, playerMatchReviews, players, tournaments } from "@/db/schema";
-import { requireWrite } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
 import { gamePhases } from "@/lib/game-phases";
 import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
 import { formatPlayerDisplayName } from "@/lib/player-name";
@@ -49,11 +49,14 @@ export default async function ImportPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string; file?: string; processed?: string; duplicates?: string; failed?: string }>;
 }) {
-  const user = await requireWrite();
+  const user = await requireAppUser();
+  const canEdit = user.role !== "read";
   const params = await searchParams;
   const flashCode = params.message ?? params.error;
   const message = importMessage(flashCode, params.file);
-  const tournamentRows = await getOrCreateDefaultTournaments(user.id);
+  const tournamentRows = canEdit
+    ? await getOrCreateDefaultTournaments(user.id)
+    : await db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id));
   const rosterRows = await db
     .select()
     .from(players)
@@ -103,7 +106,7 @@ export default async function ImportPage({
         </div>
       </div>
 
-      {pendingMatches.length > 0 ? (
+      {canEdit && pendingMatches.length > 0 ? (
         <dialog open className="fixed inset-0 z-50 m-auto w-[min(720px,calc(100%-2rem))] rounded-3xl border border-amber-200 bg-white p-0 shadow-2xl backdrop:bg-black/40">
           <div className="border-b border-zinc-100 p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-600">Revisión requerida</p>
@@ -192,8 +195,16 @@ export default async function ImportPage({
           {message}
         </p>
       ) : null}
-      <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <ImportUploadForm defaultTournamentId={tournamentRows[0]?.id ?? ""} phaseOptions={gamePhases} tournamentOptions={tournamentRows} />
+      <div className={canEdit ? "grid gap-6 lg:grid-cols-[420px_1fr]" : "grid gap-6"}>
+        {canEdit ? (
+          <ImportUploadForm defaultTournamentId={tournamentRows[0]?.id ?? ""} phaseOptions={gamePhases} tournamentOptions={tournamentRows} />
+        ) : (
+          <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Solo lectura</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">Importaciones visibles</h2>
+            <p className="mt-2 text-sm text-zinc-600">Este perfil puede revisar importaciones, pero no subir PDFs ni guardar cambios.</p>
+          </section>
+        )}
 
         <div className="space-y-6">
           <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
@@ -205,15 +216,17 @@ export default async function ImportPage({
               <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">Organización</span>
             </div>
             <p className="mt-3 text-sm leading-6 text-zinc-600">Creá temporadas nuevas y reasigná importaciones existentes sin tocar las planillas subidas.</p>
-            <form action={createTournament} className="mt-5 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
-              <label className="block text-sm font-medium text-zinc-700">
-                Nuevo torneo
-                <input className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" name="name" placeholder="2026 - Torneo Clausura" required />
-              </label>
-              <button className="mt-4 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
-                Crear torneo
-              </button>
-            </form>
+            {canEdit ? (
+              <form action={createTournament} className="mt-5 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
+                <label className="block text-sm font-medium text-zinc-700">
+                  Nuevo torneo
+                  <input className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" name="name" placeholder="2026 - Torneo Clausura" required />
+                </label>
+                <button className="mt-4 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
+                  Crear torneo
+                </button>
+              </form>
+            ) : null}
             <div className="mt-5 grid gap-2">
               {tournamentRows.map((tournament) => (
                 <div className="rounded-2xl border border-zinc-100 px-4 py-3 text-sm font-medium text-zinc-700" key={tournament.id}>
@@ -254,32 +267,34 @@ export default async function ImportPage({
                         </span>
                       )}
                     </div>
-                    <form action={updateImportTags} className="mt-4 grid gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 md:grid-cols-[1fr_1fr_auto]">
-                      <input name="importId" type="hidden" value={row.id} />
-                      <label className="block text-sm font-medium text-zinc-700">
-                        Torneo
-                        <select className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" defaultValue={selectedTournamentId} name="tournamentId" required>
-                          {tournamentRows.map((tournament) => (
-                            <option key={tournament.id} value={tournament.id}>
-                              {tournament.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="block text-sm font-medium text-zinc-700">
-                        Fase
-                        <select className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" defaultValue="regular" name="phase" required>
-                          {gamePhases.map((phase) => (
-                            <option key={phase.value} value={phase.value}>
-                              {phase.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button className="self-end rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
-                        Guardar tags
-                      </button>
-                    </form>
+                    {canEdit ? (
+                      <form action={updateImportTags} className="mt-4 grid gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 md:grid-cols-[1fr_1fr_auto]">
+                        <input name="importId" type="hidden" value={row.id} />
+                        <label className="block text-sm font-medium text-zinc-700">
+                          Torneo
+                          <select className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" defaultValue={selectedTournamentId} name="tournamentId" required>
+                            {tournamentRows.map((tournament) => (
+                              <option key={tournament.id} value={tournament.id}>
+                                {tournament.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block text-sm font-medium text-zinc-700">
+                          Fase
+                          <select className="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/20" defaultValue="regular" name="phase" required>
+                            {gamePhases.map((phase) => (
+                              <option key={phase.value} value={phase.value}>
+                                {phase.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button className="self-end rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800" type="submit">
+                          Guardar tags
+                        </button>
+                      </form>
+                    ) : null}
                   </article>
                 );
               })}

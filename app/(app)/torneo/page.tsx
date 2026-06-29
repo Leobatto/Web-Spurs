@@ -1,4 +1,4 @@
-import { requireWrite } from "@/lib/auth";
+import { requireAppUser } from "@/lib/auth";
 import { TorneosSelector } from "@/components/torneos-selector";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ const tournaments = [
 ] as const;
 
 export default async function TorneoPage() {
-  await requireWrite();
+  await requireAppUser();
 
   return (
     <div className="space-y-8">

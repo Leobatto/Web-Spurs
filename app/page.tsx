@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { asc, desc, gte, lt } from "drizzle-orm";
+import { Film, PlayCircle, Tv2 } from "lucide-react";
 import { db } from "@/db";
 import { games } from "@/db/schema";
 
@@ -92,6 +93,41 @@ export default async function Home() {
           </div>
         </section>
       </main>
+
+      <section className="mx-auto max-w-7xl px-6 pb-16">
+        <div className="rounded-[2rem] border border-black/10 bg-white/75 p-6 shadow-[0_20px_60px_rgba(9,9,11,0.12)] backdrop-blur sm:p-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-500">En vivo</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-zinc-950 sm:text-3xl">Partidos en vivo</h2>
+            </div>
+            <p className="text-sm text-zinc-500">Abrí el canal que esté transmitiendo y seguí la jornada.</p>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {[
+              { label: "TELEFONOS", href: "https://www.youtube.com/@MarySierras2025", icon: PlayCircle, tone: "text-zinc-950" },
+              { label: "CIROMAR", href: "https://www.youtube.com/@marysierras.nautilusclub", icon: Film, tone: "text-zinc-700" },
+              { label: "SMATA", href: "https://www.youtube.com/@SMATA.mar.y.sierras", icon: Tv2, tone: "text-zinc-500" },
+            ].map(({ label, href, icon: Icon, tone }) => (
+              <a
+                className="group rounded-3xl border border-zinc-200 bg-zinc-50 p-5 transition hover:-translate-y-1 hover:border-zinc-300 hover:bg-white hover:shadow-lg"
+                href={href}
+                key={label}
+                rel="noreferrer noopener"
+                target="_blank"
+              >
+                <div className={`inline-flex rounded-2xl border border-zinc-200 bg-white p-3 ${tone}`}>
+                  <Icon size={22} />
+                </div>
+                <p className="mt-4 text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Canal</p>
+                <h3 className="mt-2 text-xl font-black tracking-tight text-zinc-950">{label}</h3>
+                <p className="mt-2 text-sm text-zinc-600">Abrir transmisión en YouTube.</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
