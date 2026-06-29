@@ -124,7 +124,7 @@ export async function requireAppUser() {
 }
 
 export async function getDashboardOwnerUserId(userId: string, role: string) {
-  if (role !== "read") {
+  if (role === "admin") {
     return userId;
   }
 
