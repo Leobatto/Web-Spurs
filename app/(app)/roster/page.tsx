@@ -3,7 +3,7 @@ import { createPlayer } from "@/app/actions/roster";
 import { RosterManager } from "@/components/roster-manager";
 import { db } from "@/db";
 import { players } from "@/db/schema";
-import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +32,11 @@ export default async function RosterPage({
   const user = await requireAppUser();
   const params = await searchParams;
   const message = messageText(params.message);
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const roster = await db
     .select()
     .from(players)
-    .where(eq(players.ownerUserId, user.id))
+    .where(eq(players.ownerUserId, ownerId))
     .orderBy(sortOrder(params.sort), asc(players.name));
 
   if (user.role === "read") {

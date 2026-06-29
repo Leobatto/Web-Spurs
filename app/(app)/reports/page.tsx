@@ -2,7 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
-import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 import { GameFilters } from "@/components/game-filters";
 import { ReportsCharts } from "@/components/reports-charts";
 import { formatGamePhase, gamePhases } from "@/lib/game-phases";
@@ -130,9 +130,10 @@ export default async function ReportsPage({
   const user = await requireAppUser();
   const params = await searchParams;
   const selectedCategory = params.category ?? "total";
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const [allGames, statRows] = await Promise.all([
-    db.select().from(games).where(eq(games.ownerUserId, user.id)),
-    db.select({ game: games, stat: playerGameStats, player: players }).from(playerGameStats).innerJoin(players, eq(playerGameStats.playerId, players.id)).innerJoin(games, eq(playerGameStats.gameId, games.id)).where(eq(games.ownerUserId, user.id)),
+    db.select().from(games).where(eq(games.ownerUserId, ownerId)),
+    db.select({ game: games, stat: playerGameStats, player: players }).from(playerGameStats).innerJoin(players, eq(playerGameStats.playerId, players.id)).innerJoin(games, eq(playerGameStats.gameId, games.id)).where(eq(games.ownerUserId, ownerId)),
   ]);
 
   const opponents = Array.from(new Set(allGames.map((game) => game.opponent))).sort((a, b) => a.localeCompare(b));

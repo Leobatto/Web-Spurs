@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { games, playerGameStats, players } from "@/db/schema";
 import { StatCard } from "@/components/stat-card";
-import { requireUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireUser } from "@/lib/auth";
 import { GameFilters } from "@/components/game-filters";
 import { formatGamePhase } from "@/lib/game-phases";
 import { formatGameCategory } from "@/lib/game-categories";
@@ -59,15 +59,16 @@ export default async function DashboardPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const selectedCategory = (params.category ?? "total") as CategoryKey;
   const [allGames, statRows] = await Promise.all([
-    db.select().from(games).where(eq(games.ownerUserId, user.id)),
+    db.select().from(games).where(eq(games.ownerUserId, ownerId)),
     db
       .select({ player: players, stat: playerGameStats, game: games })
       .from(playerGameStats)
       .innerJoin(players, eq(playerGameStats.playerId, players.id))
       .innerJoin(games, eq(playerGameStats.gameId, games.id))
-      .where(eq(games.ownerUserId, user.id)),
+      .where(eq(games.ownerUserId, ownerId)),
   ]);
   const opponents = Array.from(new Set(allGames.map((game) => game.opponent))).sort((a, b) => a.localeCompare(b));
   const filteredGames = allGames.filter((game) => {

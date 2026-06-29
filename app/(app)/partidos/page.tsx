@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { games, playerGameStats, players, tournaments } from "@/db/schema";
 import { StatCard } from "@/components/stat-card";
 import { DeleteGameButton } from "@/components/delete-game-button";
-import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 import { GameFilters } from "@/components/game-filters";
 import { formatGameCategory } from "@/lib/game-categories";
 import { formatGamePhase } from "@/lib/game-phases";
@@ -39,16 +39,17 @@ export default async function PartidosPage({
 }) {
   const user = await requireAppUser();
   const params = await searchParams;
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const [allGames, statRows, playerRows, tournamentRows] = await Promise.all([
-    db.select().from(games).where(eq(games.ownerUserId, user.id)),
+    db.select().from(games).where(eq(games.ownerUserId, ownerId)),
     db
       .select({ gameId: playerGameStats.gameId, stat: playerGameStats })
       .from(playerGameStats)
       .innerJoin(games, eq(playerGameStats.gameId, games.id))
-      .where(eq(games.ownerUserId, user.id)),
-    db.select().from(players).where(eq(players.ownerUserId, user.id)),
+      .where(eq(games.ownerUserId, ownerId)),
+    db.select().from(players).where(eq(players.ownerUserId, ownerId)),
     user.role === "admin"
-      ? db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id))
+      ? db.select().from(tournaments).where(eq(tournaments.ownerUserId, ownerId))
       : Promise.resolve([]),
   ]);
 

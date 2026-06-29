@@ -5,7 +5,7 @@ import { StatCard } from "@/components/stat-card";
 import { updateGameDetails } from "@/app/actions/games";
 import { db } from "@/db";
 import { games, playerGameStats, players, tournaments } from "@/db/schema";
-import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 import { formatGameCategory, gameCategoryOptions } from "@/lib/game-categories";
 import { advancedStats, type BaseStats } from "@/lib/stats";
 import { formatPlayerDisplayName } from "@/lib/player-name";
@@ -123,13 +123,14 @@ function bestRecordFor(rows: Row[], metric: "points" | "assists" | "rebounds") {
 export default async function PartidoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireAppUser();
   const { id } = await params;
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const [gameRows, tournamentRows] = await Promise.all([
     db
       .select()
       .from(games)
-      .where(and(eq(games.id, id), eq(games.ownerUserId, user.id)))
+      .where(and(eq(games.id, id), eq(games.ownerUserId, ownerId)))
       .limit(1),
-    db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id)),
+    db.select().from(tournaments).where(eq(tournaments.ownerUserId, ownerId)),
   ]);
   const [game] = gameRows;
 

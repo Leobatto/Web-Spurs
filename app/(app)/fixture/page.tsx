@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc, desc, gte, lt } from "drizzle-orm";
+import { and, asc, desc, gte, lt, eq } from "drizzle-orm";
 import { CalendarPlus } from "lucide-react";
 import {
   createFixtureGame,
@@ -10,6 +10,7 @@ import {
 import { db } from "@/db";
 import { games } from "@/db/schema";
 import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId } from "@/lib/auth";
 import {
   calendarUrl,
   googleCalendarEmbedUrl,
@@ -172,9 +173,10 @@ export default async function FixturePage({
   const params = await searchParams;
   const message = syncMessage(params.sync);
   const now = new Date();
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const [upcomingGames, pastGames] = await Promise.all([
-    db.select().from(games).where(gte(games.date, now)).orderBy(asc(games.date)),
-    db.select().from(games).where(lt(games.date, now)).orderBy(desc(games.date)),
+    db.select().from(games).where(and(eq(games.ownerUserId, ownerId), gte(games.date, now))).orderBy(asc(games.date)),
+    db.select().from(games).where(and(eq(games.ownerUserId, ownerId), lt(games.date, now))).orderBy(desc(games.date)),
   ]);
   const googleUrl = googleCalendarSubscribeUrl();
   const embedUrl = googleCalendarEmbedUrl();

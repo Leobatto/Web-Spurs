@@ -4,7 +4,7 @@ import { updateImportTags } from "@/app/actions/import";
 import { resolvePlayerMatch } from "@/app/actions/player-matches";
 import { db } from "@/db";
 import { imports, playerMatchReviews, players, tournaments } from "@/db/schema";
-import { requireAppUser } from "@/lib/auth";
+import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 import { gamePhases } from "@/lib/game-phases";
 import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
 import { formatPlayerDisplayName } from "@/lib/player-name";
@@ -54,19 +54,20 @@ export default async function ImportPage({
   const params = await searchParams;
   const flashCode = params.message ?? params.error;
   const message = importMessage(flashCode, params.file);
+  const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const tournamentRows = canEdit
     ? await getOrCreateDefaultTournaments(user.id)
-    : await db.select().from(tournaments).where(eq(tournaments.ownerUserId, user.id));
+    : await db.select().from(tournaments).where(eq(tournaments.ownerUserId, ownerId));
   const rosterRows = await db
     .select()
     .from(players)
-    .where(eq(players.ownerUserId, user.id))
+    .where(eq(players.ownerUserId, ownerId))
     .orderBy(asc(players.lastName), asc(players.name));
   const rows = await db
     .select({ row: imports, tournamentName: tournaments.name })
     .from(imports)
     .leftJoin(tournaments, eq(imports.tournamentId, tournaments.id))
-    .where(eq(imports.ownerUserId, user.id))
+    .where(eq(imports.ownerUserId, ownerId))
     .orderBy(desc(imports.createdAt));
   const pendingMatches = await db
     .select({ match: playerMatchReviews, suggestedPlayer: players })
@@ -74,7 +75,7 @@ export default async function ImportPage({
     .leftJoin(players, eq(playerMatchReviews.suggestedPlayerId, players.id))
     .where(
       and(
-        eq(playerMatchReviews.ownerUserId, user.id),
+        eq(playerMatchReviews.ownerUserId, ownerId),
         eq(playerMatchReviews.status, "pending"),
       ),
     );
