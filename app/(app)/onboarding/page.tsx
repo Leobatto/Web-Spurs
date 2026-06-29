@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {
   await requireAppUser();
-  const roster = await db.select().from(players).orderBy(asc(players.name), asc(players.lastName));
+  const roster = await db.select().from(players).orderBy(asc(players.lastName), asc(players.name));
 
   return (
     <div className="mx-auto max-w-2xl">

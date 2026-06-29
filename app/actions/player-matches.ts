@@ -17,7 +17,15 @@ import { deriveLastName } from "@/lib/player-name";
 
 const resolveSchema = z.object({
   matchId: z.string().min(1),
-  mode: z.enum(["suggested", "new"]),
+  mode: z.enum(["suggested", "existing", "new"]),
+  playerId: z.string().optional(),
+  name: z.string().trim().optional(),
+  lastName: z.string().trim().optional(),
+  nickname: z.string().trim().optional(),
+  jerseyNumber: z.preprocess(
+    (value) => (value === "" || value === null || value === undefined ? undefined : value),
+    z.coerce.number().int().min(0).max(99).optional(),
+  ),
 });
 
 async function insertResolvedStats(input: {
@@ -120,14 +128,39 @@ export async function resolvePlayerMatch(formData: FormData) {
       playerId: match.suggestedPlayerId,
       status: "resolved",
     });
+  } else if (parsed.mode === "existing") {
+    if (!parsed.playerId) {
+      throw new Error("Elegí un jugador para vincular.");
+    }
+
+    const [existingPlayer] = await db
+      .select()
+      .from(players)
+      .where(eq(players.id, parsed.playerId))
+      .limit(1);
+
+    if (!existingPlayer || existingPlayer.ownerUserId !== user.id) {
+      throw new Error("No se encontró el jugador elegido.");
+    }
+
+    await insertResolvedStats({
+      matchId: parsed.matchId,
+      playerId: existingPlayer.id,
+      status: "resolved",
+    });
   } else {
+    if (!parsed.name) {
+      throw new Error("Ingresá el nombre del jugador nuevo.");
+    }
+
     const playerId = createId("player");
     await db.insert(players).values({
       id: playerId,
       ownerUserId: user.id,
-      name: match.rawName,
-      lastName: deriveLastName(match.rawName),
-      jerseyNumber: null,
+      name: parsed.name,
+      lastName: parsed.lastName || deriveLastName(parsed.name),
+      nickname: parsed.nickname || null,
+      jerseyNumber: parsed.jerseyNumber === undefined ? null : parsed.jerseyNumber,
     });
 
     await insertResolvedStats({

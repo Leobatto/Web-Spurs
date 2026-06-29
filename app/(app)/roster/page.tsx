@@ -21,7 +21,7 @@ function sortOrder(sort?: string) {
   if (sort === "lastName-desc") return desc(players.lastName);
   if (sort === "jersey-asc") return asc(players.jerseyNumber);
   if (sort === "jersey-desc") return desc(players.jerseyNumber);
-  return asc(players.name);
+  return asc(players.lastName);
 }
 
 export default async function RosterPage({
@@ -48,7 +48,7 @@ export default async function RosterPage({
             {message}
           </p>
         ) : null}
-        <RosterManager activeSort={params.sort ?? "name-asc"} roster={roster} />
+        <RosterManager activeSort={params.sort ?? "lastName-asc"} roster={roster} />
       </section>
       <aside className="grid h-fit gap-6">
         <form action={createPlayer} className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
