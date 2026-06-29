@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { account, appSettings, games, user } from "@/db/schema";
 import { ADMIN_EMAIL } from "@/lib/auth";
+import { formatGameCategory } from "@/lib/game-categories";
 import { getLocationLink } from "@/lib/locations";
 
 type Game = typeof games.$inferSelect;
@@ -147,7 +148,7 @@ export async function saveGoogleRefreshToken(refreshToken: string) {
 }
 
 function eventTitle(game: Game) {
-  const category = game.category === "PM" ? "+30" : "+40";
+  const category = formatGameCategory(game.category);
 
   if (game.finalScore) {
     return `J.P. Spurs vs ${game.opponent} - ${game.finalScore} (${category})`;
@@ -176,7 +177,7 @@ function eventBody(game: Game) {
   const locationLink = getLocationLink(game.location);
   const description = [
     game.finalScore ? `Resultado: ${game.finalScore}` : "Resultado pendiente",
-    `Categoria: ${game.category === "PM" ? "+30" : "+40"}`,
+    `Categoria: ${formatGameCategory(game.category)}`,
     game.isHome ? "Local: J.P. Spurs" : "Visitante: J.P. Spurs",
     locationLink ? `Mapa: ${locationLink}` : null,
   ].filter(Boolean);

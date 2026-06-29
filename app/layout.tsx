@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "JP Spurs Stats",
   description: "Planillas, estadísticas y reportes de JP Spurs.",
+  icons: {
+    icon: "/logo-spurs.png",
+    shortcut: "/logo-spurs.png",
+    apple: "/logo-spurs.png",
+  },
 };
 
 export default function RootLayout({

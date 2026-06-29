@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { players, user as userTable } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { deriveLastName } from "@/lib/player-name";
+import { fileToDataUrl } from "@/lib/photo-upload";
 
 const accountSchema = z.object({
   phone: z.string().trim().min(8),
@@ -43,7 +44,9 @@ export async function updateOwnPlayerProfile(formData: FormData) {
     return;
   }
 
+  const photoUrl = await fileToDataUrl(formData.get("photo"));
   const parsed = playerProfileSchema.parse(Object.fromEntries(formData));
+  const [currentPlayer] = await db.select().from(players).where(eq(players.id, user.playerId)).limit(1);
 
   await db
     .update(players)
@@ -55,6 +58,7 @@ export async function updateOwnPlayerProfile(formData: FormData) {
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null
           : parsed.jerseyNumber,
+      photoUrl: photoUrl ?? currentPlayer?.photoUrl ?? null,
       updatedAt: new Date(),
     })
     .where(eq(players.id, user.playerId));

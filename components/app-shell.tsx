@@ -7,12 +7,13 @@ const baseLinks = [
   ["Dashboard", "/dashboard"],
   ["Torneos", "/torneo"],
   ["Multimedia", "/multimedia"],
+  ["Instagram", "/instagram"],
   ["Fixture", "/fixture"],
   ["Partidos", "/partidos"],
   ["Plantel", "/roster"],
   ["Importar", "/import"],
   ["Jugadas", "/jugadas"],
-  ["Reportes", "/reports"],
+  ["Estadísticas", "/reports"],
   ["Mi perfil", "/account"],
 ];
 
@@ -22,7 +23,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     currentUser?.role === "admin"
       ? [...baseLinks, ["Usuarios", "/users"]]
       : currentUser?.role === "read"
-        ? [["Dashboard", "/dashboard"]]
+        ? [["Dashboard", "/dashboard"], ["Instagram", "/instagram"]]
         : baseLinks;
 
   return (
@@ -39,7 +40,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </summary>
           <div className="border-t border-white/10 px-5 py-4">
-            <p className="text-sm text-zinc-400">Stats, reportes, partidos, usuarios y pizarra.</p>
+              <p className="text-sm text-zinc-400">Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
             <nav className="mt-4 grid gap-2">
               {links.map(([label, href]) => (
                 <Link
@@ -64,7 +65,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <Image alt="JP Spurs" src="/logo-spurs.png" width={38} height={38} className="rounded-full bg-white/5 p-1" />
             <span>JP Spurs</span>
           </Link>
-          <p className="mt-2 text-sm text-zinc-400">Stats, reportes, partidos, usuarios y pizarra.</p>
+          <p className="mt-2 text-sm text-zinc-400">Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
           <nav className="mt-8 grid gap-2">
             {links.map(([label, href]) => (
               <Link

@@ -13,6 +13,7 @@ import {
   syncAllGamesToGoogleCalendar,
   syncGameToGoogleCalendar,
 } from "@/lib/google-calendar";
+import { gameCategoryValues } from "@/lib/game-categories";
 import { createId } from "@/lib/ids";
 
 const youtubeUrlSchema = z.string().trim().refine((value) => {
@@ -28,7 +29,7 @@ const youtubeUrlSchema = z.string().trim().refine((value) => {
 
 const fixtureGameSchema = z.object({
   opponent: z.string().trim().min(2),
-  category: z.enum(["PM", "M"]),
+  category: z.enum(gameCategoryValues),
   date: z.string().min(1),
   location: z.string().trim().optional(),
   isHome: z.string().optional(),
@@ -94,6 +95,7 @@ export async function updateFixtureVideo(formData: FormData) {
 
   revalidatePath("/fixture");
   revalidatePath(`/games/${parsed.gameId}`);
+  revalidatePath(`/partidos/${parsed.gameId}`);
 }
 
 const deleteFixtureGameSchema = z.object({

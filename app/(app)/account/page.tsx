@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { eq } from "drizzle-orm";
 import { updateOwnAccount, updateOwnPlayerProfile } from "@/app/actions/account";
 import { LinkGoogleAccountButton } from "@/components/link-google-account-button";
@@ -51,8 +52,19 @@ export default async function AccountPage() {
           </button>
         </form>
         {linkedPlayer ? (
-          <form action={updateOwnPlayerProfile} className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
+          <form action={updateOwnPlayerProfile} className="mt-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4" encType="multipart/form-data">
             <h2 className="font-semibold">{formatPlayerDisplayName(linkedPlayer)}</h2>
+            <div className="mt-4 flex items-center gap-4 rounded-2xl border border-zinc-100 bg-white p-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-100 ring-1 ring-zinc-200">
+                {linkedPlayer.photoUrl ? (
+                  <Image alt={formatPlayerDisplayName(linkedPlayer)} className="h-full w-full object-cover" height={64} src={linkedPlayer.photoUrl} width={64} />
+                ) : null}
+              </div>
+              <label className="block flex-1 text-sm font-medium text-zinc-700">
+                Foto
+                <input className="mt-2 w-full rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3" accept="image/*" name="photo" type="file" />
+              </label>
+            </div>
             <label className="mt-4 block text-sm font-medium text-zinc-700">
               Nombre en cancha
               <input

@@ -51,7 +51,7 @@ export default async function RosterPage({
         <RosterManager activeSort={params.sort ?? "lastName-asc"} roster={roster} />
       </section>
       <aside className="grid h-fit gap-6">
-        <form action={createPlayer} className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <form action={createPlayer} className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm" encType="multipart/form-data">
           <h2 className="text-xl font-bold">Alta rápida</h2>
           <label className="mt-5 block text-sm font-medium text-zinc-700">
             Nombre
@@ -68,6 +68,10 @@ export default async function RosterPage({
           <label className="mt-4 block text-sm font-medium text-zinc-700">
             Número
             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" name="jerseyNumber" type="number" min="0" max="99" />
+          </label>
+          <label className="mt-4 block text-sm font-medium text-zinc-700">
+            Foto
+            <input className="mt-2 w-full rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3" accept="image/*" name="photo" type="file" />
           </label>
           <button className="mt-5 w-full rounded-xl bg-zinc-950 px-4 py-3 font-semibold text-white" type="submit">
             Crear jugador

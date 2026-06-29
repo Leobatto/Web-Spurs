@@ -55,8 +55,8 @@ export const analyzedPlayerSchema = z.object({
 });
 
 export const gameAnalysisSchema = z.object({
-  category: z.enum(["PM", "M"]),
-  categoryLabel: z.enum(["+30", "+40"]),
+  category: z.enum(["PM", "M", "U"]),
+  categoryLabel: z.enum(["+30", "+40", "Única"]),
   opponent: z.string().min(1),
   date: z.string().nullable().optional(),
   isHome: z.boolean(),
@@ -102,8 +102,8 @@ Valida dos veces:
 
 Extrae el box score completo de Spurs y devuelve SOLO JSON valido con esta forma:
 {
-  "category": "PM" | "M",
-  "categoryLabel": "+30" | "+40",
+   "category": "PM" | "M" | "U",
+   "categoryLabel": "+30" | "+40" | "Única",
   "opponent": "Rival",
   "date": "YYYY-MM-DD" | null,
   "isHome": true,
@@ -149,8 +149,8 @@ Extrae el box score completo de Spurs y devuelve SOLO JSON valido con esta forma
 }
 
 Importante:
-- category debe ser exactamente "PM" para Pre Maxi/+30 o "M" para Maxi/+40.
-- categoryLabel debe ser exactamente "+30" o "+40". No uses "PM", "M", "Pre Maxi" ni "Maxi" en categoryLabel.
+- category debe ser exactamente "PM" para Pre Maxi/+30, "M" para Maxi/+40 o "U" para Única.
+- categoryLabel debe ser exactamente "+30", "+40" o "Única". No uses "PM", "M", "Pre Maxi" ni "Maxi" en categoryLabel.
 
 Reglas especiales para whatsappSummary:
 - Si un jugador de Spurs consigue mas de 5 robos, mencionalo.
@@ -194,6 +194,10 @@ function normalizeCategory(value: unknown) {
     return "M";
   }
 
+  if (["u", "unica", "única", "single"].includes(normalized)) {
+    return "U";
+  }
+
   return value;
 }
 
@@ -214,12 +218,20 @@ function normalizeCategoryLabel(value: unknown, category: unknown) {
     return "+40";
   }
 
+  if (["única", "unica", "u"].includes(normalized)) {
+    return "Única";
+  }
+
   if (normalizedCategory === "PM") {
     return "+30";
   }
 
   if (normalizedCategory === "M") {
     return "+40";
+  }
+
+  if (normalizedCategory === "U") {
+    return "Única";
   }
 
   return value;

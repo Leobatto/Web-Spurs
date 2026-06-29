@@ -1,15 +1,14 @@
 "use server";
 
-import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { user as userTable } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
+import { createId } from "@/lib/ids";
 
 const roleSchema = z.enum(["admin", "write", "read"]);
 
@@ -22,51 +21,45 @@ const inviteSchema = z.object({
 export async function inviteUser(formData: FormData) {
   await requireAdmin();
   const parsed = inviteSchema.parse(Object.fromEntries(formData));
-  const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const email = parsed.email.toLowerCase();
 
   const [existing] = await db
     .select()
     .from(userTable)
-    .where(eq(userTable.email, parsed.email))
+    .where(eq(userTable.email, email))
     .limit(1);
 
-  if (!existing) {
-    await auth.api.signUpEmail({
-      body: {
+  try {
+    if (!existing) {
+      await db.insert(userTable).values({
+        id: createId("user"),
         name: parsed.name,
-        email: parsed.email,
-        password: crypto.randomBytes(16).toString("hex"),
+        email,
+        emailVerified: false,
+        role: parsed.role,
+        emailReports: true,
+        onboarded: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } else {
+      await db
+        .update(userTable)
+        .set({ name: parsed.name, role: parsed.role, emailVerified: false, updatedAt: new Date() })
+        .where(eq(userTable.id, existing.id));
+    }
+
+    await auth.api.requestPasswordReset({
+      body: {
+        email,
+        redirectTo: `${baseUrl}/reset-password`,
       },
-      headers: await headers(),
     });
-  } else {
-    await db
-      .update(userTable)
-      .set({ name: parsed.name, updatedAt: new Date() })
-      .where(eq(userTable.id, existing.id));
-  }
-
-  const [userRow] = await db
-    .select()
-    .from(userTable)
-    .where(eq(userTable.email, parsed.email))
-    .limit(1);
-
-  if (!userRow) {
+  } catch (error) {
+    console.error("Invite user failed", error);
     redirect("/users?message=invite-failed");
   }
-
-  await db
-    .update(userTable)
-    .set({ role: parsed.role, emailVerified: false, updatedAt: new Date() })
-    .where(eq(userTable.id, userRow.id));
-
-  await auth.api.requestPasswordReset({
-    body: {
-      email: parsed.email,
-      redirectTo: `${baseUrl.replace(/\/$/, "")}/reset-password`,
-    },
-  });
 
   revalidatePath("/users");
   redirect("/users?message=invited");

@@ -314,6 +314,31 @@ export async function registerImport(formData: FormData) {
   redirect(`/import?message=imports-processed&processed=${processed}&duplicates=${duplicates}&failed=${failed}`);
 }
 
+export async function resetImportedData() {
+  const user = await requireWrite();
+
+  await db.transaction(async (tx) => {
+    await tx.delete(playerGameStats).where(
+      inArray(
+        playerGameStats.gameId,
+        tx.select({ id: games.id }).from(games).where(eq(games.ownerUserId, user.id)),
+      ),
+    );
+    await tx.delete(playerMatchReviews).where(eq(playerMatchReviews.ownerUserId, user.id));
+    await tx.delete(imports).where(eq(imports.ownerUserId, user.id));
+    await tx.delete(players).where(eq(players.ownerUserId, user.id));
+    await tx.delete(games).where(eq(games.ownerUserId, user.id));
+  });
+
+  revalidatePath("/import");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath("/fixture");
+  revalidatePath("/partidos");
+  revalidatePath("/roster");
+  redirect("/import?message=imports-reset");
+}
+
 const importTagSchema = z.object({
   importId: z.string().min(1),
   tournamentId: z.string().min(1),

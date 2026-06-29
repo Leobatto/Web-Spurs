@@ -1,6 +1,6 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { createTournament } from "@/app/actions/tournaments";
-import { resetImportedData, updateImportTags } from "@/app/actions/import";
+import { updateImportTags } from "@/app/actions/import";
 import { resolvePlayerMatch } from "@/app/actions/player-matches";
 import { db } from "@/db";
 import { imports, playerMatchReviews, players, tournaments } from "@/db/schema";
@@ -9,7 +9,6 @@ import { gamePhases } from "@/lib/game-phases";
 import { getOrCreateDefaultTournaments } from "@/lib/tournaments";
 import { formatPlayerDisplayName } from "@/lib/player-name";
 import { ImportUploadForm } from "@/components/import-upload-form";
-import { DeleteGameButton } from "@/components/delete-game-button";
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +78,7 @@ export default async function ImportPage({
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-[32px] border border-zinc-900 bg-zinc-950 px-6 py-6 text-white shadow-[0_24px_80px_rgba(9,9,11,0.34)] sm:px-8 sm:py-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-400">Importar</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.35em] text-zinc-400">Subir estadística en PDF</p>
         <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Carga guiada de PDFs</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">
           Subí planillas una sola vez, revisá duplicados antes de enviar y mantené torneos e importaciones ordenados desde un mismo lugar.
@@ -228,29 +227,6 @@ export default async function ImportPage({
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Paso 3</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight">Empezar de cero</h2>
-              </div>
-              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">Destructivo</span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">
-              Borra partidos importados, estadísticas, revisiones, jugadores e importaciones del usuario actual para arrancar limpio.
-            </p>
-            {user.role === "admin" ? (
-              <form action={resetImportedData} className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4">
-                  <p className="text-sm font-semibold text-red-800">Usá esto solo si querés rehacer todo el historial.</p>
-                  <div className="mt-4">
-                    <DeleteGameButton label="Borrar todo el histórico" />
-                  </div>
-                </form>
-            ) : (
-              <p className="mt-5 rounded-2xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-600">Solo un administrador puede vaciar el histórico.</p>
-            )}
-          </section>
-
-          <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Paso 4</p>
                 <h2 className="mt-2 text-2xl font-black tracking-tight">Últimas importaciones</h2>
               </div>
               <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">{rows.length} registros</span>

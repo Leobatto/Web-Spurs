@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["admin", "write", "read"]);
-export const gameCategoryEnum = pgEnum("game_category", ["PM", "M"]);
+export const gameCategoryEnum = pgEnum("game_category", ["PM", "M", "U"]);
 export const gamePhaseEnum = pgEnum("game_phase", ["regular", "quarterfinal", "semifinal", "final"]);
 export const importStatusEnum = pgEnum("import_status", [
   "uploaded",

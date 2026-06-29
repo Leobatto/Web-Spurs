@@ -14,6 +14,7 @@ import {
 import { requireWrite } from "@/lib/auth";
 import { createId } from "@/lib/ids";
 import { deriveLastName } from "@/lib/player-name";
+import { fileToDataUrl } from "@/lib/photo-upload";
 
 const playerSchema = z.object({
   name: z.string().trim().min(2),
@@ -25,6 +26,7 @@ const playerSchema = z.object({
 export async function createPlayer(formData: FormData) {
   const user = await requireWrite();
   const parsed = playerSchema.parse(Object.fromEntries(formData));
+  const photoUrl = await fileToDataUrl(formData.get("photo"));
 
   await db.insert(players).values({
     id: createId("player"),
@@ -32,6 +34,7 @@ export async function createPlayer(formData: FormData) {
     name: parsed.name,
     lastName: parsed.lastName || deriveLastName(parsed.name),
     nickname: parsed.nickname || null,
+    photoUrl,
     jerseyNumber:
       parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
         ? null
@@ -48,6 +51,8 @@ const updatePlayerSchema = playerSchema.extend({
 export async function updatePlayer(formData: FormData) {
   await requireWrite();
   const parsed = updatePlayerSchema.parse(Object.fromEntries(formData));
+  const photoUrl = await fileToDataUrl(formData.get("photo"));
+  const [currentPlayer] = await db.select().from(players).where(eq(players.id, parsed.playerId)).limit(1);
 
   await db
     .update(players)
@@ -55,6 +60,7 @@ export async function updatePlayer(formData: FormData) {
       name: parsed.name,
       lastName: parsed.lastName || deriveLastName(parsed.name),
       nickname: parsed.nickname || null,
+      photoUrl: photoUrl ?? currentPlayer?.photoUrl ?? null,
       jerseyNumber:
         parsed.jerseyNumber === "" || parsed.jerseyNumber === undefined
           ? null

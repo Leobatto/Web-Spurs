@@ -206,10 +206,21 @@ export function RosterManager({
 
       {editModalOpen && firstSelected ? (
         <dialog open className="fixed inset-0 z-50 m-auto w-[min(560px,calc(100%-2rem))] rounded-3xl border border-zinc-200 bg-white p-0 shadow-2xl backdrop:bg-black/40">
-          <form action={updatePlayer} className="p-6">
+          <form action={updatePlayer} className="p-6" encType="multipart/form-data">
             <input name="playerId" type="hidden" value={firstSelected.id} />
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Editar jugador</p>
             <h2 className="mt-2 text-2xl font-black">{formatPlayerDisplayName(firstSelected)}</h2>
+            <div className="mt-4 flex items-center gap-4 rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-zinc-100 ring-1 ring-zinc-200">
+                {firstSelected.photoUrl ? (
+                  <Image alt={formatPlayerDisplayName(firstSelected)} className="h-full w-full object-cover" height={64} src={firstSelected.photoUrl} width={64} />
+                ) : null}
+              </div>
+              <label className="block flex-1 text-sm font-medium text-zinc-700">
+                Foto nueva
+                <input className="mt-2 w-full rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-3" accept="image/*" name="photo" type="file" />
+              </label>
+            </div>
             <label className="mt-5 block text-sm font-medium text-zinc-700">
               Nombre
               <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={firstSelected.name} name="name" required />
