@@ -4,6 +4,7 @@ import { Camera, ExternalLink } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 const instagramUrl = "https://www.instagram.com/jp.spurs/";
+const instagramEmbedUrl = "https://www.instagram.com/jp.spurs/embed/";
 
 export default async function InstagramPage() {
   await requireAppUser();
@@ -17,18 +18,30 @@ export default async function InstagramPage() {
       </section>
 
       <section className="overflow-hidden rounded-[28px] border border-zinc-200 bg-white shadow-sm">
-        <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="grid gap-6 border-b border-zinc-100 p-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
               <Camera size={14} /> JP Spurs
             </div>
-            <h2 className="mt-4 text-2xl font-black tracking-tight">Abrir Instagram oficial</h2>
-            <p className="mt-2 max-w-2xl text-sm text-zinc-600">Usá este acceso para ver publicaciones, historias y novedades del club sin chocar con la restricción de iframe.</p>
+            <h2 className="mt-4 text-2xl font-black tracking-tight">Instagram embebido</h2>
+            <p className="mt-2 max-w-2xl text-sm text-zinc-600">Intentamos abrir el perfil dentro de un iframe. Si Instagram lo bloquea en tu navegador, usá el acceso directo.</p>
           </div>
           <a className="inline-flex items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800" href={instagramUrl} rel="noreferrer noopener" target="_blank">
             <ExternalLink size={16} /> Abrir en Instagram
           </a>
         </div>
+        <div className="bg-zinc-50">
+          <iframe
+            className="h-[80vh] w-full border-0 bg-white"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            src={instagramEmbedUrl}
+            title="Instagram de JP Spurs"
+          />
+        </div>
+        <p className="border-t border-zinc-100 px-6 py-4 text-sm text-zinc-500">
+          Si el embed no carga por restricción de Instagram, abrilo directo con el botón de arriba.
+        </p>
       </section>
     </div>
   );

@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PlaySquare,
+  Radio,
   ShieldUser,
   Swords,
   Trophy,
@@ -32,6 +33,7 @@ const navMeta: Record<string, { icon: React.ComponentType<{ size?: number; class
   Torneos: { icon: Trophy, tone: "text-zinc-200" },
   Multimedia: { icon: Film, tone: "text-zinc-300" },
   Instagram: { icon: Camera, tone: "text-zinc-100" },
+  "Partidos en vivo": { icon: Radio, tone: "text-zinc-100" },
   Fixture: { icon: CalendarDays, tone: "text-zinc-400" },
   Partidos: { icon: PlaySquare, tone: "text-zinc-200" },
   Plantel: { icon: Users, tone: "text-zinc-300" },
@@ -92,7 +94,7 @@ export function AppShellClient({
       </header>
 
       <aside className={`hidden border-b border-zinc-200 bg-zinc-950 text-white lg:fixed lg:inset-y-0 lg:left-0 lg:block lg:border-b-0 lg:transition-all lg:duration-300 ${collapsed ? "lg:w-20" : "lg:w-72"}`}>
-        <div className="flex h-full flex-col p-6">
+        <div className="flex h-full min-h-0 flex-col overflow-y-auto p-6">
           <div className="flex items-start justify-between gap-3">
             <Link href="/dashboard" className="flex items-center gap-3 text-2xl font-black tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
               <Image alt="JP Spurs" src="/logo-spurs.png" width={38} height={38} className="rounded-full bg-white/5 p-1" />
