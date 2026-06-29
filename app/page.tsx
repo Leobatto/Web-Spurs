@@ -31,7 +31,7 @@ export default async function Home() {
   const [lastMatch] = await db.select().from(games).where(lt(games.date, now)).orderBy(desc(games.date)).limit(1);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(196,206,214,0.12),_transparent_34%),linear-gradient(180deg,#0a0a0a_0%,#141414_54%,#bdb8ae_54%,#bdb8ae_100%)] text-zinc-950">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(196,206,214,0.12),_transparent_34%),linear-gradient(180deg,#0a0a0a_0%,#141414_54%,#b0a998_54%,#b0a998_100%)] text-zinc-950">
       <main className="mx-auto grid min-h-screen max-w-7xl items-start gap-12 px-6 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:py-16">
         <section className="space-y-8 text-white lg:pr-8">
           <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-200 backdrop-blur">
@@ -55,7 +55,7 @@ export default async function Home() {
         </section>
 
         <section className="relative">
-          <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[#a8a196]/30 blur-3xl" />
+          <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[#9f9583]/30 blur-3xl" />
           <div className="rounded-[2rem] border border-zinc-200 bg-white p-5 text-zinc-950 shadow-2xl shadow-black/20 sm:p-7">
             <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-5">
               <div>

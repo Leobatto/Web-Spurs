@@ -1,9 +1,9 @@
-import Image from "next/image";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { SignOutButton } from "@/components/sign-out-button";
+import { AppShellClient } from "@/components/app-shell-client";
 
-const baseLinks = [
+type ShellLink = [string, string];
+
+const baseLinks: ShellLink[] = [
   ["Dashboard", "/dashboard"],
   ["Torneos", "/torneo"],
   ["Multimedia", "/multimedia"],
@@ -19,72 +19,12 @@ const baseLinks = [
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const currentUser = await getCurrentUser();
-  const links =
+  const links: ShellLink[] =
     currentUser?.role === "admin"
-      ? [...baseLinks, ["Usuarios", "/users"]]
+      ? [...baseLinks, ["Usuarios", "/users"] as ShellLink]
       : currentUser?.role === "read"
         ? [["Dashboard", "/dashboard"], ["Instagram", "/instagram"]]
         : baseLinks;
 
-  return (
-    <div className="min-h-screen bg-[#f3f1ec] text-zinc-950">
-      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-zinc-950 text-white lg:hidden">
-        <details className="group">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
-            <Link href="/dashboard" className="flex items-center gap-3 text-lg font-black tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
-              <Image alt="JP Spurs" src="/logo-spurs.png" width={32} height={32} className="rounded-full bg-white/5 p-1" />
-              <span>JP Spurs</span>
-            </Link>
-            <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-zinc-200 transition group-open:bg-white group-open:text-zinc-950">
-              Menu
-            </span>
-          </summary>
-          <div className="border-t border-white/10 px-5 py-4">
-              <p className="text-sm text-zinc-400">Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
-            <nav className="mt-4 grid gap-2">
-              {links.map(([label, href]) => (
-                <Link
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-                  href={href}
-                  key={href}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
-            <div className="mt-4 pb-1">
-              <SignOutButton />
-            </div>
-          </div>
-        </details>
-      </header>
-
-      <aside className="hidden border-b border-zinc-200 bg-zinc-950 text-white lg:fixed lg:inset-y-0 lg:left-0 lg:block lg:w-72 lg:border-b-0">
-        <div className="flex h-full flex-col p-6">
-          <Link href="/dashboard" className="flex items-center gap-3 text-2xl font-black tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950">
-            <Image alt="JP Spurs" src="/logo-spurs.png" width={38} height={38} className="rounded-full bg-white/5 p-1" />
-            <span>JP Spurs</span>
-          </Link>
-          <p className="mt-2 text-sm text-zinc-400">Stats, reportes, partidos, usuarios, Instagram y pizarra.</p>
-          <nav className="mt-8 grid gap-2">
-            {links.map(([label, href]) => (
-              <Link
-                className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
-                href={href}
-                key={href}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <div className="mt-auto pt-8">
-            <SignOutButton />
-          </div>
-        </div>
-      </aside>
-      <main className="lg:pl-72">
-        <div className="mx-auto max-w-6xl px-5 py-8 lg:px-10">{children}</div>
-      </main>
-    </div>
-  );
+  return <AppShellClient links={links}>{children}</AppShellClient>;
 }

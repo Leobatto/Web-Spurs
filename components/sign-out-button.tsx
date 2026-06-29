@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
-export function SignOutButton() {
+export function SignOutButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
 
   async function signOut() {
@@ -14,8 +14,8 @@ export function SignOutButton() {
   }
 
   return (
-    <button className="flex items-center gap-2 text-sm text-zinc-400" onClick={signOut} type="button">
-      <LogOut size={16} /> Salir
+    <button className={`flex items-center gap-2 text-sm text-zinc-400 ${compact ? "justify-center" : ""}`} onClick={signOut} type="button" title="Salir">
+      <LogOut size={16} /> <span className={compact ? "lg:sr-only" : ""}>Salir</span>
     </button>
   );
 }

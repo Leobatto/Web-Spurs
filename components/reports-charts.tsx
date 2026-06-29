@@ -38,33 +38,31 @@ export function ReportsCharts({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="space-y-6">
       <section className="overflow-hidden rounded-[28px] border border-zinc-800 bg-zinc-950 p-6 text-white shadow-[0_20px_60px_rgba(9,9,11,0.28)]">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-400">Producción por partido</p>
         <h2 className="mt-2 text-2xl font-black tracking-tight">Puntos, rebotes y asistencias</h2>
-        <div className="mt-6 overflow-x-auto pb-2">
-          <div className="h-80 min-w-[640px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={games}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                <XAxis dataKey="label" stroke="#a1a1aa" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={56} />
-                <YAxis stroke="#a1a1aa" tick={{ fontSize: 12 }} />
-                <Tooltip contentStyle={{ background: "#09090b", border: "1px solid #27272a", borderRadius: 16, color: "#fafafa" }} labelStyle={{ color: "#d4d4d8" }} />
-                <Legend wrapperStyle={{ color: "#fafafa" }} />
-                <Line type="monotone" dataKey="points" stroke="#f59e0b" strokeWidth={3} dot={false} name="Puntos" />
-                <Line type="monotone" dataKey="rebounds" stroke="#38bdf8" strokeWidth={2} dot={false} name="Rebotes" />
-                <Line type="monotone" dataKey="assists" stroke="#a78bfa" strokeWidth={2} dot={false} name="Asistencias" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="mt-6 h-80 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={games}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+              <XAxis dataKey="label" stroke="#a1a1aa" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={56} />
+              <YAxis stroke="#a1a1aa" tick={{ fontSize: 12 }} />
+              <Tooltip contentStyle={{ background: "#09090b", border: "1px solid #27272a", borderRadius: 16, color: "#fafafa" }} labelStyle={{ color: "#d4d4d8" }} />
+              <Legend wrapperStyle={{ color: "#fafafa" }} />
+              <Line type="monotone" dataKey="points" stroke="#f59e0b" strokeWidth={3} dot={false} name="Puntos" />
+              <Line type="monotone" dataKey="rebounds" stroke="#38bdf8" strokeWidth={2} dot={false} name="Rebotes" />
+              <Line type="monotone" dataKey="assists" stroke="#a78bfa" strokeWidth={2} dot={false} name="Asistencias" />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-zinc-200 bg-white p-6 shadow-sm">
+      <section className="mx-auto w-full max-w-4xl rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-500">Distribución</p>
         <h2 className="mt-2 text-2xl font-black tracking-tight">Partidos por fase</h2>
-        <div className="mt-6 overflow-x-auto pb-2">
-          <div className="h-80 min-w-[540px]">
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={phaseBreakdown}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
@@ -75,13 +73,11 @@ export function ReportsCharts({
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-        <div className="mt-6 overflow-x-auto pb-2">
-          <div className="h-72 min-w-[540px]">
+          <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e4e4e7", borderRadius: 16 }} />
-                <Pie data={phaseBreakdown} dataKey="value" nameKey="name" innerRadius={58} outerRadius={92} paddingAngle={2}>
+                <Pie data={phaseBreakdown} dataKey="value" nameKey="name" innerRadius={52} outerRadius={78} paddingAngle={2}>
                   {phaseBreakdown.map((entry, index) => (
                     <Cell fill={phaseColors[index % phaseColors.length]} key={entry.name} />
                   ))}
