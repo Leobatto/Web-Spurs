@@ -2,9 +2,9 @@ import Link from "next/link";
 import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { StatCard } from "@/components/stat-card";
-import { updateGameDetails, updatePlayerGameStat } from "@/app/actions/games";
+import { revertPlayerGameStatEdit, updateGameDetails, updatePlayerGameStat } from "@/app/actions/games";
 import { db } from "@/db";
-import { games, playerGameStats, players, tournaments } from "@/db/schema";
+import { games, playerGameStatRevisions, playerGameStats, players, tournaments } from "@/db/schema";
 import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
 import { formatGameCategory, gameCategoryOptions } from "@/lib/game-categories";
 import { advancedStats, type BaseStats } from "@/lib/stats";
@@ -174,11 +174,16 @@ export default async function PartidoDetailPage({
     .from(playerGameStats)
     .innerJoin(players, eq(playerGameStats.playerId, players.id))
     .where(eq(playerGameStats.gameId, id));
+  const revisions = await db
+    .select()
+    .from(playerGameStatRevisions)
+    .where(eq(playerGameStatRevisions.gameId, id));
   const rosterRows = await db
     .select()
     .from(players)
     .where(eq(players.ownerUserId, ownerId))
     .orderBy(asc(players.lastName), asc(players.name));
+  const revisionByStatId = new Map(revisions.map((revision) => [revision.playerGameStatId, revision]));
 
   const orderedRows = [...rows].sort((a, b) => b.stat.points - a.stat.points || formatPlayerDisplayName(a.player).localeCompare(formatPlayerDisplayName(b.player)));
   const totals = totalsFor(rows);
@@ -235,13 +240,18 @@ export default async function PartidoDetailPage({
       {query.message === "stat-updated" ? (
         <p className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">La estadística se actualizó correctamente.</p>
       ) : null}
+      {query.message === "stat-reverted" ? (
+        <p className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">Se deshizo el último cambio y se restauró la línea anterior.</p>
+      ) : null}
       {query.error ? (
         <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           {query.error === "stat-not-found"
             ? "No se encontró la estadística a editar."
             : query.error === "player-not-found"
               ? "No se encontró el jugador elegido."
-              : "No se pudo completar la edición."}
+              : query.error === "stat-history-missing"
+                ? "No hay un cambio previo para deshacer."
+                : "No se pudo completar la edición."}
         </p>
       ) : null}
 
@@ -418,7 +428,12 @@ export default async function PartidoDetailPage({
 
                   {isAdmin ? (
                     <details className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
-                      <summary className="cursor-pointer text-sm font-semibold text-zinc-700">Editar estadística</summary>
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-zinc-700">
+                        <span>Editar estadística</span>
+                        <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.3em] ${revisionByStatId.has(row.stat.id) ? "bg-amber-100 text-amber-800" : "bg-zinc-100 text-zinc-500"}`}>
+                          {revisionByStatId.has(row.stat.id) ? "Con deshacer" : "Sin historial"}
+                        </span>
+                      </summary>
                       <form action={updatePlayerGameStat} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <input name="playerGameStatId" type="hidden" value={row.stat.id} />
                         <label className="block text-sm font-medium text-zinc-700 sm:col-span-2 lg:col-span-3">
@@ -437,10 +452,21 @@ export default async function PartidoDetailPage({
                             <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statValue(row.stat, field.name)} name={field.name} type="number" />
                           </label>
                         ))}
-                        <button className="rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white sm:col-span-2 lg:col-span-3" type="submit">
-                          Guardar cambios
-                        </button>
+                        <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-3 lg:flex-row lg:items-center lg:justify-between">
+                          <p className="text-xs leading-5 text-zinc-500">Guardar conserva una copia previa para poder deshacer el último cambio.</p>
+                          <button className="rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white" type="submit">
+                            Guardar cambios
+                          </button>
+                        </div>
                       </form>
+                      {revisionByStatId.has(row.stat.id) ? (
+                        <form action={revertPlayerGameStatEdit} className="mt-3 flex justify-end">
+                          <input name="playerGameStatId" type="hidden" value={row.stat.id} />
+                          <button className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50" type="submit">
+                            Deshacer último cambio
+                          </button>
+                        </form>
+                      ) : null}
                     </details>
                   ) : null}
                 </article>

@@ -166,6 +166,23 @@ export const playerGameStats = pgTable("player_game_stats", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const playerGameStatRevisions = pgTable(
+  "player_game_stat_revisions",
+  {
+    id: text("id").primaryKey(),
+    playerGameStatId: text("player_game_stat_id").notNull(),
+    gameId: text("game_id").notNull(),
+    playerId: text("player_id").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    editedByUserId: text("edited_by_user_id").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueStat: uniqueIndex("player_game_stat_revisions_stat_idx").on(table.playerGameStatId),
+  }),
+);
+
 export const imports = pgTable("imports", {
   id: text("id").primaryKey(),
   ownerUserId: text("owner_user_id").notNull(),

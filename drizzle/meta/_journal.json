@@ -57,6 +57,13 @@
       "when": 1782486000000,
       "tag": "0007_wide_silent_phase",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1782851010000,
+      "tag": "0010_player_game_stat_revisions",
+      "breakpoints": true
     }
   ]
 }
