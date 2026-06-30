@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { StatCard } from "@/components/stat-card";
-import { updateGameDetails } from "@/app/actions/games";
+import { updateGameDetails, updatePlayerGameStat } from "@/app/actions/games";
 import { db } from "@/db";
 import { games, playerGameStats, players, tournaments } from "@/db/schema";
 import { getDashboardOwnerUserId, requireAppUser } from "@/lib/auth";
@@ -22,6 +22,26 @@ type RecordStat = {
   value: number;
   row: Row;
 };
+
+type EditableStatKey =
+  | "minutes"
+  | "points"
+  | "fgMade"
+  | "fgAtt"
+  | "twoMade"
+  | "twoAtt"
+  | "threeMade"
+  | "threeAtt"
+  | "ftMade"
+  | "ftAtt"
+  | "offReb"
+  | "defReb"
+  | "assists"
+  | "steals"
+  | "blocks"
+  | "turnovers"
+  | "fouls"
+  | "plusMinus";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("es-AR", {
@@ -120,9 +140,20 @@ function bestRecordFor(rows: Row[], metric: "points" | "assists" | "rebounds") {
   }, null);
 }
 
-export default async function PartidoDetailPage({ params }: { params: Promise<{ id: string }> }) {
+function statValue(stat: Row["stat"], key: keyof Row["stat"]) {
+  return stat[key as EditableStatKey] as number;
+}
+
+export default async function PartidoDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ message?: string; error?: string }>;
+}) {
   const user = await requireAppUser();
   const { id } = await params;
+  const query = await searchParams;
   const ownerId = await getDashboardOwnerUserId(user.id, user.role);
   const [gameRows, tournamentRows] = await Promise.all([
     db
@@ -143,6 +174,11 @@ export default async function PartidoDetailPage({ params }: { params: Promise<{ 
     .from(playerGameStats)
     .innerJoin(players, eq(playerGameStats.playerId, players.id))
     .where(eq(playerGameStats.gameId, id));
+  const rosterRows = await db
+    .select()
+    .from(players)
+    .where(eq(players.ownerUserId, ownerId))
+    .orderBy(asc(players.lastName), asc(players.name));
 
   const orderedRows = [...rows].sort((a, b) => b.stat.points - a.stat.points || formatPlayerDisplayName(a.player).localeCompare(formatPlayerDisplayName(b.player)));
   const totals = totalsFor(rows);
@@ -152,6 +188,28 @@ export default async function PartidoDetailPage({ params }: { params: Promise<{ 
   const recordAssists = bestRecordFor(rows, "assists");
   const recordRebounds = bestRecordFor(rows, "rebounds");
   const currentTournament = tournamentRows.find((item) => item.id === game.tournamentId);
+  const isAdmin = user.role === "admin";
+
+  const statFields = [
+    { name: "minutes", label: "Min" },
+    { name: "points", label: "PTS" },
+    { name: "fgMade", label: "FG met" },
+    { name: "fgAtt", label: "FG att" },
+    { name: "twoMade", label: "2P met" },
+    { name: "twoAtt", label: "2P att" },
+    { name: "threeMade", label: "3P met" },
+    { name: "threeAtt", label: "3P att" },
+    { name: "ftMade", label: "FT met" },
+    { name: "ftAtt", label: "FT att" },
+    { name: "offReb", label: "O Reb" },
+    { name: "defReb", label: "D Reb" },
+    { name: "assists", label: "AST" },
+    { name: "steals", label: "ROB" },
+    { name: "blocks", label: "BLK" },
+    { name: "turnovers", label: "TO" },
+    { name: "fouls", label: "FL" },
+    { name: "plusMinus", label: "+/-" },
+  ] as const;
 
   return (
     <div>
@@ -173,6 +231,19 @@ export default async function PartidoDetailPage({ params }: { params: Promise<{ 
           ) : null}
         </div>
       </div>
+
+      {query.message === "stat-updated" ? (
+        <p className="mt-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">La estadística se actualizó correctamente.</p>
+      ) : null}
+      {query.error ? (
+        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {query.error === "stat-not-found"
+            ? "No se encontró la estadística a editar."
+            : query.error === "player-not-found"
+              ? "No se encontró el jugador elegido."
+              : "No se pudo completar la edición."}
+        </p>
+      ) : null}
 
       {user.role === "admin" ? (
         <section className="mt-8 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -285,54 +356,96 @@ export default async function PartidoDetailPage({ params }: { params: Promise<{ 
           Este partido todavía no tiene estadísticas cargadas.
         </div>
       ) : (
-        <section className="mt-8 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-          <div className="border-b border-zinc-100 p-5">
-            <h2 className="text-2xl font-black tracking-tight">Box score</h2>
-            <p className="mt-1 text-sm text-zinc-500">Detalle de cada jugador en el partido.</p>
+        <section className="mt-8 rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight">Box score</h2>
+              <p className="mt-1 text-sm text-zinc-500">Detalle por jugador, adaptado para celular.</p>
+            </div>
+            {isAdmin ? <p className="text-sm text-zinc-500">Podés tocar una tarjeta y corregir la línea completa.</p> : null}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
-              <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3">Jugador</th>
-                  <th className="px-4 py-3">MIN</th>
-                  <th className="px-4 py-3">PTS</th>
-                  <th className="px-4 py-3">FG</th>
-                  <th className="px-4 py-3">2P</th>
-                  <th className="px-4 py-3">3P</th>
-                  <th className="px-4 py-3">FT</th>
-                  <th className="px-4 py-3">REB</th>
-                  <th className="px-4 py-3">AST</th>
-                  <th className="px-4 py-3">ROB</th>
-                  <th className="px-4 py-3">BLK</th>
-                  <th className="px-4 py-3">TO</th>
-                  <th className="px-4 py-3">+/-</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orderedRows.map((row) => (
-                  <tr className="border-t border-zinc-100" key={row.stat.id}>
-                    <td className="px-4 py-3 font-semibold text-zinc-950">
-                      <Link className="underline decoration-zinc-300 underline-offset-4 hover:text-zinc-700" href={`/players/${row.player.id}`}>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {orderedRows.map((row, index) => {
+              const tiles = [
+                { label: "MIN", value: row.stat.minutes },
+                { label: "REB", value: row.stat.offReb + row.stat.defReb },
+                { label: "AST", value: row.stat.assists },
+                { label: "ROB", value: row.stat.steals },
+                { label: "BLK", value: row.stat.blocks },
+                { label: "TO", value: row.stat.turnovers },
+              ];
+
+              return (
+                <article className="rounded-3xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm sm:p-5" key={row.stat.id}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-400">#{index + 1}</p>
+                      <Link className="mt-2 block text-lg font-black tracking-tight text-zinc-950 underline-offset-4 hover:underline" href={`/players/${row.player.id}`}>
                         {formatPlayerDisplayName(row.player)}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3">{row.stat.minutes}</td>
-                    <td className="px-4 py-3 font-semibold">{row.stat.points}</td>
-                    <td className="px-4 py-3">{row.stat.fgMade}/{row.stat.fgAtt}</td>
-                    <td className="px-4 py-3">{row.stat.twoMade}/{row.stat.twoAtt}</td>
-                    <td className="px-4 py-3">{row.stat.threeMade}/{row.stat.threeAtt}</td>
-                    <td className="px-4 py-3">{row.stat.ftMade}/{row.stat.ftAtt}</td>
-                    <td className="px-4 py-3">{row.stat.offReb + row.stat.defReb}</td>
-                    <td className="px-4 py-3">{row.stat.assists}</td>
-                    <td className="px-4 py-3">{row.stat.steals}</td>
-                    <td className="px-4 py-3">{row.stat.blocks}</td>
-                    <td className="px-4 py-3">{row.stat.turnovers}</td>
-                    <td className="px-4 py-3">{row.stat.plusMinus}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <p className="mt-1 text-sm text-zinc-500">{row.player.jerseyNumber ? `#${row.player.jerseyNumber}` : "Sin dorsal"}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-4 py-3 text-right ring-1 ring-zinc-200">
+                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">PTS</p>
+                      <p className="mt-1 text-3xl font-black text-zinc-950">{row.stat.points}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-white px-3 py-2 ring-1 ring-zinc-200">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-400">FG</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-950">{row.stat.fgMade}/{row.stat.fgAtt}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-3 py-2 ring-1 ring-zinc-200">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-400">2P</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-950">{row.stat.twoMade}/{row.stat.twoAtt}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-3 py-2 ring-1 ring-zinc-200">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-400">3P / FT</p>
+                      <p className="mt-1 text-sm font-semibold text-zinc-950">{row.stat.threeMade}/{row.stat.threeAtt} · {row.stat.ftMade}/{row.stat.ftAtt}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+                    {tiles.map((tile) => (
+                      <div className="rounded-2xl bg-white px-3 py-2 ring-1 ring-zinc-200" key={tile.label}>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-zinc-400">{tile.label}</p>
+                        <p className="mt-1 text-sm font-semibold text-zinc-950">{tile.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {isAdmin ? (
+                    <details className="mt-4 rounded-2xl border border-zinc-200 bg-white p-4">
+                      <summary className="cursor-pointer text-sm font-semibold text-zinc-700">Editar estadística</summary>
+                      <form action={updatePlayerGameStat} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <input name="playerGameStatId" type="hidden" value={row.stat.id} />
+                        <label className="block text-sm font-medium text-zinc-700 sm:col-span-2 lg:col-span-3">
+                          Jugador
+                          <select className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={row.player.id} name="playerId" required>
+                            {rosterRows.map((player) => (
+                              <option key={player.id} value={player.id}>
+                                {formatPlayerDisplayName(player)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        {statFields.map((field) => (
+                          <label className="block text-sm font-medium text-zinc-700" key={field.name}>
+                            {field.label}
+                            <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statValue(row.stat, field.name)} name={field.name} type="number" />
+                          </label>
+                        ))}
+                        <button className="rounded-xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white sm:col-span-2 lg:col-span-3" type="submit">
+                          Guardar cambios
+                        </button>
+                      </form>
+                    </details>
+                  ) : null}
+                </article>
+              );
+            })}
           </div>
         </section>
       )}

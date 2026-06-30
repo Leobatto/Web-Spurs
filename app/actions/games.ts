@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { games } from "@/db/schema";
+import { games, playerGameStats, players } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth";
 import { deleteGameFromGoogleCalendar, syncGameToGoogleCalendar } from "@/lib/google-calendar";
 import { gameCategoryValues } from "@/lib/game-categories";
@@ -97,4 +97,92 @@ export async function deleteGameDetails(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/reports");
   redirect("/partidos?message=deleted");
+}
+
+const updatePlayerGameStatSchema = z.object({
+  playerGameStatId: z.string().min(1),
+  playerId: z.string().min(1),
+  minutes: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  points: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  fgMade: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  fgAtt: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  twoMade: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  twoAtt: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  threeMade: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  threeAtt: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  ftMade: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  ftAtt: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  offReb: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  defReb: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  assists: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  steals: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  blocks: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  turnovers: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  fouls: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().min(0).optional()),
+  plusMinus: z.preprocess((value) => (value === "" || value === null || value === undefined ? undefined : value), z.coerce.number().int().optional()),
+});
+
+export async function updatePlayerGameStat(formData: FormData) {
+  await requireAdmin();
+  const parsed = updatePlayerGameStatSchema.parse(Object.fromEntries(formData));
+
+  const [currentStat] = await db
+    .select({ stat: playerGameStats, game: games })
+    .from(playerGameStats)
+    .innerJoin(games, eq(playerGameStats.gameId, games.id))
+    .where(eq(playerGameStats.id, parsed.playerGameStatId))
+    .limit(1);
+
+  if (!currentStat) {
+    redirect("/partidos?error=stat-not-found");
+  }
+
+  const [chosenPlayer] = await db
+    .select()
+    .from(players)
+    .where(and(eq(players.id, parsed.playerId), eq(players.ownerUserId, currentStat.game.ownerUserId)))
+    .limit(1);
+
+  if (!chosenPlayer) {
+    redirect(`/partidos/${currentStat.game.id}?error=player-not-found`);
+  }
+
+  const statPayload = {
+    playerId: chosenPlayer.id,
+    minutes: parsed.minutes ?? currentStat.stat.minutes,
+    points: parsed.points ?? currentStat.stat.points,
+    fgMade: parsed.fgMade ?? currentStat.stat.fgMade,
+    fgAtt: parsed.fgAtt ?? currentStat.stat.fgAtt,
+    twoMade: parsed.twoMade ?? currentStat.stat.twoMade,
+    twoAtt: parsed.twoAtt ?? currentStat.stat.twoAtt,
+    threeMade: parsed.threeMade ?? currentStat.stat.threeMade,
+    threeAtt: parsed.threeAtt ?? currentStat.stat.threeAtt,
+    ftMade: parsed.ftMade ?? currentStat.stat.ftMade,
+    ftAtt: parsed.ftAtt ?? currentStat.stat.ftAtt,
+    offReb: parsed.offReb ?? currentStat.stat.offReb,
+    defReb: parsed.defReb ?? currentStat.stat.defReb,
+    assists: parsed.assists ?? currentStat.stat.assists,
+    steals: parsed.steals ?? currentStat.stat.steals,
+    blocks: parsed.blocks ?? currentStat.stat.blocks,
+    turnovers: parsed.turnovers ?? currentStat.stat.turnovers,
+    fouls: parsed.fouls ?? currentStat.stat.fouls,
+    plusMinus: parsed.plusMinus ?? currentStat.stat.plusMinus,
+    updatedAt: new Date(),
+  };
+
+  await db
+    .update(playerGameStats)
+    .set(statPayload)
+    .where(eq(playerGameStats.id, parsed.playerGameStatId));
+
+  revalidatePath(`/partidos/${currentStat.game.id}`);
+  revalidatePath("/partidos");
+  revalidatePath("/dashboard");
+  revalidatePath("/reports");
+  revalidatePath(`/players/${currentStat.stat.playerId}`);
+  if (currentStat.stat.playerId !== chosenPlayer.id) {
+    revalidatePath(`/players/${chosenPlayer.id}`);
+  }
+
+  redirect(`/partidos/${currentStat.game.id}?message=stat-updated`);
 }
