@@ -41,7 +41,16 @@ function importMessage(code?: string, fileName?: string) {
     return "No se encontró la importación para actualizar.";
   }
 
+  if (code === "already-resolved") {
+    return "Esa coincidencia ya fue resuelta.";
+  }
+
   return null;
+}
+
+function statNumber(stats: Record<string, unknown> | null, key: string) {
+  const value = stats?.[key];
+  return typeof value === "number" ? value : 0;
 }
 
 export default async function ImportPage({
@@ -119,6 +128,80 @@ export default async function ImportPage({
           <div className="grid max-h-[70vh] gap-3 overflow-auto p-6">
             {pendingMatches.map(({ match, suggestedPlayer }) => (
               <div className="rounded-2xl border border-zinc-200 p-4" key={match.id}>
+                {user.role === "admin" ? (
+                  <form action={resolvePlayerMatch} className="rounded-2xl border border-zinc-100 bg-white p-4">
+                    <input name="matchId" type="hidden" value={match.id} />
+                    <input name="mode" type="hidden" value="existing" />
+                    <p className="text-sm font-semibold text-zinc-700">Corregir estadísticas y vincular</p>
+                    <p className="mt-1 text-xs text-zinc-500">Si el PDF tomó un dato mal, corregilo acá antes de guardar.</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {(() => {
+                        const rawStats = match.rawStats && typeof match.rawStats === "object" && !Array.isArray(match.rawStats)
+                          ? (match.rawStats as Record<string, unknown>)
+                          : null;
+
+                        return (
+                          <>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Jugador
+                              <select className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={match.suggestedPlayerId ?? ""} name="playerId" required>
+                                <option value="">Seleccionar</option>
+                                {rosterRows.map((player) => (
+                                  <option key={player.id} value={player.id}>
+                                    {formatPlayerDisplayName(player)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Puntos
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "points")} name="points" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Minutos
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "minutes")} name="minutes" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Rebotes ofensivos
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "offReb")} name="offReb" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Rebotes defensivos
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "defReb")} name="defReb" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Asistencias
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "assists")} name="assists" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Robos
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "steals")} name="steals" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Tapones
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "blocks")} name="blocks" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Pérdidas
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "turnovers")} name="turnovers" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              Faltas
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "fouls")} name="fouls" type="number" min="0" />
+                            </label>
+                            <label className="block text-sm font-medium text-zinc-700">
+                              +/-
+                              <input className="mt-2 w-full rounded-xl border border-zinc-200 px-4 py-3" defaultValue={statNumber(rawStats, "plusMinus")} name="plusMinus" type="number" />
+                            </label>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <button className="mt-4 rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white" type="submit">
+                      Guardar y vincular
+                    </button>
+                  </form>
+                ) : null}
                 <p className="font-semibold">PDF: {match.rawName}</p>
                 <p className="mt-1 text-sm text-zinc-500">
                   Sugerencia: {suggestedPlayer ? formatPlayerDisplayName(suggestedPlayer) : match.suggestedPlayerName ?? "sin sugerencia"} ({match.confidence}%)

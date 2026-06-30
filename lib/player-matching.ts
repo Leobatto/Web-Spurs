@@ -1,5 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import type { players } from "@/db/schema";
+import { formatPlayerDisplayName } from "@/lib/player-name";
 
 type Player = InferSelectModel<typeof players>;
 
@@ -59,7 +60,14 @@ export function findBestPlayerMatch(rawName: string, roster: Player[]) {
   const matches = roster
     .map((player) => ({
       player,
-      confidence: confidence(rawName, player.name),
+      confidence: Math.max(
+        confidence(rawName, player.name),
+        confidence(rawName, formatPlayerDisplayName(player)),
+        confidence(rawName, player.lastName ?? ""),
+        confidence(rawName, player.nickname ?? ""),
+        confidence(rawName, player.jerseyNumber ? String(player.jerseyNumber) : ""),
+        confidence(rawName, player.jerseyNumber ? `#${player.jerseyNumber}` : ""),
+      ),
     }))
     .sort((a, b) => b.confidence - a.confidence);
 
